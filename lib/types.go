@@ -24,7 +24,7 @@ type KubeType struct {
 	Deployed bool
 }
 
-func (def *KubeType) UpdateInfo(new bool) (*KubeType, error) {
+func (def *KubeType) UpdateInfo(new bool, failIfAbsent bool) (*KubeType, error) {
 	cmd := exec.Command(
 		"kubectl",
 		"get",
@@ -40,8 +40,12 @@ func (def *KubeType) UpdateInfo(new bool) (*KubeType, error) {
 			panic(err)
 		}
 
-		if len(typeList) == 0 {
+		if len(typeList) == 0 && failIfAbsent == true {
 			panic("No information fetched!")
+		}
+
+		if len(typeList) == 0 && failIfAbsent == false {
+			return nil, nil
 		}
 
 		right := typeList[0]

@@ -34,7 +34,7 @@ func main() {
 
 	// fetching all deployments
 	for _, def := range typeList {
-		def.UpdateInfo(false)
+		def.UpdateInfo(false, false)
 	}
 
 	// updating cluster
@@ -56,7 +56,7 @@ func main() {
 		time.Sleep(5 * time.Second)
 
 		for _, def := range typeList {
-			upd, err := def.UpdateInfo(true)
+			upd, err := def.UpdateInfo(true, true)
 			if err != nil {
 				continue
 			}
