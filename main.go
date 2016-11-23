@@ -39,7 +39,8 @@ func main() {
 
 	// updating cluster
 	cmd := exec.Command("kubectl", "apply", "-f", filename)
-	_, err = lib.RunCmd(cmd)
+	applyResult, err := lib.RunCmd(cmd)
+	fmt.Printf("==> Response from kubectl:\n%s\n", string(applyResult[:]))
 	if err != nil {
 		panic(err)
 	}

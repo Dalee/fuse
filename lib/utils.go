@@ -19,18 +19,31 @@ func RunCmd(cmd *exec.Cmd) ([]byte, error) {
 		panic(err)
 	}
 
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		panic(err)
+	}
+
 	defer output.Close()
+	defer stderr.Close()
 
 	err = cmd.Start()
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := ioutil.ReadAll(output)
+	stdoutData, err := ioutil.ReadAll(output)
 	if err != nil {
 		return nil, err
 	}
 
+	stderrData, err := ioutil.ReadAll(stderr)
+	if err != nil {
+		return nil, err
+	}
+
+	stdoutData = append(stdoutData[:], stderrData[:]...)
+
 	cmd.Wait()
-	return data, err
+	return stdoutData, err
 }
