@@ -8,10 +8,10 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-func ParseYaml(data []byte) ([]*KubeType, error) {
+func ParseYaml(data string) ([]*KubeType, error) {
 	var err error
 
-	scanner := bufio.NewScanner(bytes.NewReader(data))
+	scanner := bufio.NewScanner(bytes.NewReader([]byte(data)))
 	scanner.Split(splitYAMLDocument)
 
 	typeList := make([]*KubeType, 0)

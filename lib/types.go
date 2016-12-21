@@ -1,8 +1,8 @@
 package lib
 
 import (
-	"os/exec"
 	"fmt"
+	"errors"
 )
 
 type KubeTypeMetadata struct {
@@ -24,18 +24,20 @@ type KubeType struct {
 	Deployed bool
 }
 
-func (def *KubeType) UpdateInfo(new bool, failIfAbsent bool) (*KubeType, error) {
-	cmd := exec.Command(
-		"kubectl",
-		"get",
-		fmt.Sprintf("%s/%s", def.Kind, def.Metadata.Name),
-		"-o",
-		"yaml",
+func (def *KubeType) UpdateInfo(clusterContext string, new bool, failIfAbsent bool) (*KubeType, error) {
+	cmd := CommandFactory(
+		clusterContext,
+		[]string{
+			"get",
+			fmt.Sprintf("%s/%s", def.Kind, def.Metadata.Name),
+			"-o",
+			"yaml",
+		},
 	)
 
-	data, err := RunCmd(cmd)
-	if err == nil {
-		typeList, err := ParseYaml(data)
+	output, success := RunCmd(cmd)
+	if success {
+		typeList, err := ParseYaml(output)
 		if err != nil {
 			panic(err)
 		}
@@ -67,7 +69,7 @@ func (def *KubeType) UpdateInfo(new bool, failIfAbsent bool) (*KubeType, error) 
 				def.Kind,
 				def.Metadata.Name,
 			)
-			return nil, err
+			return nil, errors.New("Failed to fetch data..")
 		}
 
 		fmt.Printf("==> Notice: %s/%s is not registered\n", def.Kind, def.Metadata.Name)

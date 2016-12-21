@@ -4,45 +4,78 @@ import (
 	"os"
 	"fmt"
 	"time"
+	"errors"
 
 	"io/ioutil"
 	"path/filepath"
-	"os/exec"
 
 	"fuse/lib"
 )
 
-func main() {
+var clusterContext string
+var deployFilename string
+
+//
+// get cluster context in which we are working
+// and prepare passed filename to be read
+//
+func loadDefaults([]string) {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: fuse file.yml")
 		os.Exit(1)
 	}
 
-	filename := os.Args[1]
-	filename, _ = filepath.Abs(filename)
+	deployFilename = os.Args[1]
+	deployFilename, _ = filepath.Abs(deployFilename)
 
-	fmt.Printf("==> Using file: %s\n", filename)
-	yamlData, err := ioutil.ReadFile(filename)
+	if deployFilename == "" {
+		panic(errors.New("Empty filename, did you forget about passing kubernetes.yml?"))
+	}
+
+	clusterContext = os.Getenv("CLUSTER_CONTEXT")
+}
+
+//
+// Entry point
+//
+func main() {
+	loadDefaults(os.Args)
+
+	//
+	// parsing yml file and fetch information
+	// about deployments described in file
+	//
+	fmt.Printf("==> Using file: %s\n", deployFilename)
+	yamlData, err := ioutil.ReadFile(deployFilename)
 	if err != nil {
 		panic(err)
 	}
 
-	typeList, err := lib.ParseYaml(yamlData)
+	typeList, err := lib.ParseYaml(string(yamlData[:]))
 	if err != nil {
 		panic(err)
 	}
 
-	// fetching all deployments
 	for _, def := range typeList {
-		def.UpdateInfo(false, false)
+		def.UpdateInfo(clusterContext, false, false)
 	}
 
-	// updating cluster
-	cmd := exec.Command("kubectl", "apply", "-f", filename)
-	applyResult, err := lib.RunCmd(cmd)
-	fmt.Printf("==> Response from kubectl:\n%s\n", string(applyResult[:]))
-	if err != nil {
-		panic(err)
+	//
+	// update cluster with new yml definition
+	//
+	cmd := lib.CommandFactory(
+		clusterContext,
+		[]string{
+			"apply",
+			"-f",
+			deployFilename,
+		},
+	)
+
+	output, success := lib.RunCmd(cmd)
+	fmt.Printf("==> Response from kubectl:\n%s\n", output)
+	if success == false {
+		os.Exit(127)
 	}
 
 	//
@@ -53,43 +86,70 @@ func main() {
 
 	isOk := true
 	for {
+		//
+		// give k8s some time after apply to create new replica sets
+		// for each deployment
+		//
 		fmt.Println("==> ZzzZzzZzz...")
 		time.Sleep(5 * time.Second)
 
 		for _, def := range typeList {
-			upd, err := def.UpdateInfo(true, true)
+			//
+			// update current deployment info
+			//
+			upd, err := def.UpdateInfo(clusterContext, true, true)
 			if err != nil {
 				continue
 			}
 
-			// should wait until new generation is deployed
+			//
+			// is generation changed? if not, there can be two options:
+			// 1) we are trying to deploy same generation (which should'nt happen)
+			// 2) deployment is not yet created, need to wait some time
+			//
 			if upd.Status.ObservedGeneration == def.Status.ObservedGeneration {
-				fmt.Println("==> Notice: generation is not changed, retrying..")
+				fmt.Println("==> Notice: generation is not changed yet, skipping...")
+				fmt.Println("==> Notice: probably you try to re-deploy same generation (which is error)")
 				continue
 			}
 
-			// every replica is available?
+			//
+			// does deployment have any unavailable replicas?
+			// if it does, deployment is not yet deployed..
+			//
 			if upd.Status.UnavailableReplicas == 0 {
 				fmt.Println("==> Notice: no unavailable replicas found, assuming ok")
 				def.Deployed = true
 				break
 			}
 
-			fmt.Printf("==> Still unavailable: %d\n", upd.Status.UnavailableReplicas)
+			fmt.Printf("==> Unavailable replica sets: %d, waiting...\n", upd.Status.UnavailableReplicas)
 		}
 
-		isOk = true // reset flag, to make sure every deployment is deployed
+		//
+		// checking that every deployment defined in yml file
+		// is deployed, and no errors registered during loop
+		//
+		isOk = true
 		for _, def := range typeList {
 			isOk = isOk && def.Deployed
 		}
 
-		// if it's ok, break current loop
+		//
+		// if every deployment defined in yml files
+		// is deployed, then, our job is done.
+		//
 		if isOk {
 			fmt.Println("==> Success: All deployments marked as ok..")
 			break
 		}
 
-		// check for expire hit
+		//
+		// check for expire
+		// if expire time is reached, and nothing is deployed
+		// should undo all deployments and revert them to
+		// previous replica version
+		//
 		currentTime := time.Now()
 		if currentTime.After(expiredAt) {
 			fmt.Println("==> Failure: timeout reached, marking deployment as broken")
@@ -98,26 +158,30 @@ func main() {
 	}
 
 	//
-	// deploy or rollback?
+	// So, main cycle is finished, does all deployments are deployed?
+	// if not, should rollback, otherwise, everything is ok
 	//
 	if isOk == false {
 		fmt.Println("==> Error: deploy failed, rolling back deployments..")
 		for _, def := range typeList {
-			cmd := exec.Command(
-				"kubectl",
-				"rollout",
-				"undo",
-				fmt.Sprintf("%s/%s", def.Kind, def.Metadata.Name),
+			cmd := lib.CommandFactory(
+				clusterContext,
+				[]string{
+					"rollout",
+					"undo",
+					fmt.Sprintf("%s/%s", def.Kind, def.Metadata.Name),
+				},
 			)
 
 			fmt.Printf("==> Rolling back: %s/%s\n", def.Kind, def.Metadata.Name)
-			if _, err := lib.RunCmd(cmd); err != nil {
-				fmt.Printf("==> Error: %#v", err)
-			}
+			output, _ := lib.RunCmd(cmd)
+			fmt.Printf("==> Response from kubectl: %s\n", output)
 		}
 		os.Exit(127)
+
 	} else {
-		fmt.Println("==> Success: deploy sucessfull")
+		fmt.Println("==> Success: deploy successfull")
+		os.Exit(0)
 	}
 }
 
