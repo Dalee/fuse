@@ -18,7 +18,7 @@ fuse deployment.yml
     * deployment generation is changed
     * deployment doesn't have any unavailable replicas
   * if both conditions are met, fuse assumes deployment is successful
-  * if time limit is reached, and both conditions for each deployment is not met command `rollout undo`
+  * if time limit is reached, and both conditions for each deployment is not met, command `rollout undo`
   will be executed for each deployment defined in yml file.
   
 ## Contexts
