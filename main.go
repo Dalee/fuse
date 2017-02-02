@@ -120,7 +120,7 @@ func main() {
 			if upd.Status.UnavailableReplicas == 0 {
 				fmt.Println("==> Notice: no unavailable replicas found, assuming ok")
 				def.Deployed = true
-				break
+				continue
 			}
 
 			fmt.Printf("==> Unavailable replica sets: %d, waiting...\n", upd.Status.UnavailableReplicas)
