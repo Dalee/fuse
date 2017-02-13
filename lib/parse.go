@@ -40,11 +40,9 @@ func ParseYaml(data string) ([]*KubeType, error) {
 }
 
 //
-// Warning! This piece of code is taken from Kubernetes project:
+// This piece of code is taken from Kubernetes project:
 // https://github.com/kubernetes/kubernetes/blob/b359034817685a8d25bb51bae765308d9d200da0/pkg/util/yaml/decoder.go#L143
-//
-// this part of code is covered by Apache 2.0 License
-// all credits should go to Kubernetes authors.
+// all credits should go to Kubernetes authors
 //
 const yamlSeparator = "\n---"
 

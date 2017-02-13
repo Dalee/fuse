@@ -1,0 +1,21 @@
+language: go
+go:
+  - "1.7.x"
+
+go_import_path: fuse
+
+cache:
+  directories:
+    - vendor
+
+install:
+  - go get -u github.com/modocache/gover
+  - go get -u github.com/golang/lint/golint
+  - go get -u github.com/Masterminds/glide
+  - glide install
+
+script:
+  - make coverage
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -f ./coverage.txt

@@ -1,47 +1,47 @@
 # &#9179;
 
-Simple tool to automate deployments to kubernetes cluster. Use-case is put this tool 
-as build step of CI process. 
- 
-## Usage
+Simple tool build around `kubectl` command.
 
-```bash
-fuse deployment.yml
+> Great for CI/CD environments
+
+Key features:
+ * Deploy new release to cluster with automated rollback in case of error
+ * Automatic image garbage collection for private Docker registry
+
+## Deploy
+
+Apply new configuration to Kubernetes cluster and monitor release delivery.
+
+Usage:
+```
+$ fuse apply -f deployment.yml
 ```
 
-## What will happen?
+Help screen:
+```
+$ fuse help apply
+Apply new configuration to Kubernetes cluster and monitor release delivery
 
-  * fuse will get all deployments defined in yml file
+Usage:
+  fuse apply [flags]
+
+Flags:
+  -f, --configuration string   Release configuration yaml file
+```
+
+### What will happen?
+
+  * `fuse` will get all deployments defined in yml file
   * for each deployment defined in yml file fuse will fetch info from k8s cluster
   * command `kubectl apply -f deployment.yml` will be executed
-  * fuse will check two things after `apply` for two minutes:
+  * `fuse` will periodically check two things after `kubectl apply` for a two minutes:
     * deployment generation is changed
     * deployment doesn't have any unavailable replicas
   * if both conditions are met, fuse assumes deployment is successful
   * if time limit is reached, and both conditions for each deployment is not met, command `rollout undo`
   will be executed for each deployment defined in yml file.
   
-## Contexts
-
-`kubectl` command support contexts, so, fuse trying to read environment variable
-`CLUSTER_CONTEXT` and if it's not empty, argument `--context=${CLUSTER_CONTEXT}`
-will be added to every `kubectl` command call, e.g:
-
-```bash
-export CLUSTER_CONTEXT=production
-fuse deployment.yml
-...
-kubectl --context=production apply -f deployment.yml
-kubectl --context=production rollout undo deployment/sample-deployment
-```
-
-## Stability
-
-Tool currently in beta-testing stage. But, it using internally to deliver 
-releases to our pre-production cluster.
-
-
-## Sample output
+### Sample output
 
 ```
 [13:13:46][Step 4/5] Starting: /data/temp/agentTmp/custom_script164335181065595759
@@ -58,24 +58,7 @@ releases to our pre-production cluster.
 [13:13:52][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
 [13:13:52][Step 4/5] ==> Still unavailable: 1
 [13:13:52][Step 4/5] ==> ZzzZzzZzz...
-[13:13:57][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
-[13:13:57][Step 4/5] ==> Still unavailable: 1
-[13:13:57][Step 4/5] ==> ZzzZzzZzz...
-[13:14:02][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
-[13:14:02][Step 4/5] ==> Still unavailable: 1
-[13:14:02][Step 4/5] ==> ZzzZzzZzz...
-[13:14:07][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
-[13:14:07][Step 4/5] ==> Still unavailable: 1
-[13:14:07][Step 4/5] ==> ZzzZzzZzz...
-[13:14:12][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
-[13:14:12][Step 4/5] ==> Still unavailable: 1
-[13:14:12][Step 4/5] ==> ZzzZzzZzz...
-[13:14:17][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
-[13:14:17][Step 4/5] ==> Still unavailable: 1
-[13:14:17][Step 4/5] ==> ZzzZzzZzz...
-[13:14:22][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
-[13:14:22][Step 4/5] ==> Still unavailable: 1
-[13:14:22][Step 4/5] ==> ZzzZzzZzz...
+...
 [13:14:27][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
 [13:14:27][Step 4/5] ==> Still unavailable: 1
 [13:14:27][Step 4/5] ==> ZzzZzzZzz...
@@ -86,6 +69,131 @@ releases to our pre-production cluster.
 [13:14:32][Step 4/5] Process exited with code 0
 ```
 
+## Garbage Collect
+
+Remove tags from registry not registered within any Kubernetes ReplicaSet
+
+Usage:
+```
+$ fuse garbage-collect --registry-url=https://registry.example.com:5000/
+```
+
+Help screen:
+```
+$ fuse help garbage-collect
+Remove tags from registry not registered within any Kubernetes ReplicaSet
+
+Usage:
+  fuse garbage-collect [flags]
+
+Flags:
+      --dry-run               Do not try to execute destructive actions (default "false")
+      --ignore-missing        Ignore/Skip missing images in Registry (default "false")
+      --namespace string      Namespace to fetch ReplicaSet (default "default")
+      --registry-url string   Registry URL to use (e.g. https://example.com:5000/)
+```
+
+### What will happen?
+
+  * `fuse` will search all replica sets for given namespace (`default` is by default)
+  * For each replica set `Spec.Template.Spec.Containers[].Image` will be analyzed
+  * For each image repository, full list of tags and image digests will be fetched from provided `registry-url`
+  * If some of repositories absent in provided `registry-url`, error will be thrown, unless `ignore-missing` is set
+  * For each founded image repository, all tags not registered in replica set (i.e. not deployed or stale)
+    will be marked for deletion
+  * If `dry-run` is not set, images digests marked for deletion will be deleted
+
+
+> Don't forget to schedule [garbage-collect](https://docs.docker.com/registry/garbage-collection/) command
+
+### Sample output
+
+```
+==> Using namespace: default
+==> Executing: kubectl --context=production --namespace=default get replicasets -o yaml
+==> Found: 11 ReplicaSets
+==> Detecting garbage, dry-run is: true
+==> Detection, done
+==> acme/project1-live
+Deployed: [3 7 4 6 8 5]
+Garbage: [1 2]
+sha256:ee09ac314a1a79a202b8646538cc9298a8f87da27fb69359f6e7a3f1e7c48e5b
+==> heapster
+Deployed: [v1.2.0]
+Garbage: []
+==> kubernetes-dashboard-amd64
+Deployed: [1.5.0]
+Garbage: []
+==> acme/project2-live
+Deployed: [4]
+Garbage: [1 2 3]
+sha256:50989e7a5c59bef81b5f28297f834014fb0903de105cdbff6a57ef263861ecef
+sha256:74ba39cfc2ebce16582c1dd9254fa0a566fb05e7f34f149c90382a0085697f08
+Done, have a nice day!
+```
+
+## Contexts
+
+`kubectl` command support contexts, so, fuse trying to read environment variable
+`CLUSTER_CONTEXT` and if it's not empty, argument `--context=${CLUSTER_CONTEXT}`
+will be added to every `kubectl` command call, e.g:
+
+Command `apply`:
+```
+export CLUSTER_CONTEXT=production
+fuse apply -f deployment.yml
+...
+kubectl --context=production apply -f deployment.yml
+...
+kubectl --context=production rollout undo deployment/sample-deployment
+```
+
+Command `garbage-collect`:
+```
+export CLUSTER_CONTEXT=production
+fuse garbage-collect --dry-run --registry-url=https://registry.example.com:5000/
+==> Using namespace: default
+==> Executing: kubectl --context=production --namespace=default get replicasets -o yaml
+...
+```
+
+## Stability
+
+Tool currently in pre-release stage. But, it is using heavily to deliver 
+releases to our staging/production cluster. So, at least `apply` command 
+is mature enough.
+
+Tool is tested with Kubernetes `v1.2.0`
+
+## Known issues / How to avoid problems
+
+Put `build id`, `build number` or any auto incremented value, provided by CI/CD,
+as `env` variable parameter or as deployment `label`. This is workaround 
+for a situation when Docker image create from `cache` is re-deployed as 
+new build (even with new image tag). In this situation Kubernetes will not 
+apply any changes to  `deployment`  configuration and will not update 
+`Status.ObservedGeneration`, in this case `fuse` will rollout release.
+
 ## License
 
-Code is unlicensed. Do whatever you want with it. [Set Your Code Free](http://unlicense.org/).
+Fuse is licensed under the Apache License, Version 2.0. 
+See LICENSE for the full license text.
+
+[fuse v1.0.1](https://github.com/Dalee/fuse/tree/v1.0.1) is released under 
+[Unlicense](http://unlicense.org/) license terms, so you can use it, 
+if you want.
+
+
+## Development
+
+ * Golang >= 1.7.x
+ * [golint](https://github.com/golang/lint)
+ * [glide](https://github.com/Masterminds/glide)
+ * make
+
+```
+$ glide install
+... work work work
+
+$ make test && make lint
+```
