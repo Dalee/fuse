@@ -68,8 +68,10 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 	// remove duplicated entries
 	RemoveDuplicates(&k8sImageList)
 
-	// prepare k8s deployed list
+	// prepare k8s deployed list and deployed repository list (to keep order, map order is not defined)
 	deployedImages := make(map[string][]string, 0)
+	deployedImagesList := make([]string, 0)
+
 	for _, imageRefSpec := range k8sImageList {
 		u, err := DecodeReference(imageRefSpec)
 		if err != nil {
@@ -78,6 +80,12 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 
 		deployedImages[u.Repository] =
 			append(deployedImages[u.Repository], u.Tag)
+
+		// if repository is not registered in orderList, register it
+		if StringInSlice(u.Repository, deployedImagesList) == false {
+			deployedImagesList =
+				append(deployedImagesList, u.Repository)
+		}
 	}
 
 	// prepare registry registered list
@@ -115,7 +123,8 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 	//garbageImages := make(map[string][]string)
 	detectInfo := new(GarbageDetectInfo)
 
-	for repositoryPath, deployedTagList := range deployedImages {
+	for _, repositoryPath := range deployedImagesList {
+		deployedTagList := deployedImages[repositoryPath]
 		detectItem := &GarbageDetectItem{
 			Repository: repositoryPath,
 			DeployedTagList: deployedTagList,
@@ -124,7 +133,7 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 
 		detectInfo.Items = append(detectInfo.Items, detectItem)
 
-		imageDigestList, ok := registryImages[repositoryPath];
+		imageDigestList, ok := registryImages[repositoryPath]
 		if !ok {
 			if ignoreMissing == false {
 				return nil, fmt.Errorf(fmt.Sprintf("Unknown image: %s", repositoryPath))
