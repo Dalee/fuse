@@ -1,1 +1,4 @@
-fuse
+/vendor
+/fuse
+/coverage.out
+.coverprofile

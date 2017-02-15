@@ -1,0 +1,11 @@
+package: fuse
+import:
+- package: github.com/ghodss/yaml
+- package: github.com/spf13/cobra
+  subpackages:
+  - cobra
+- package: github.com/spf13/viper
+- package: github.com/stretchr/testify
+  version: ~1.1.4
+- package: github.com/Dalee/hitman
+  version: 0.1.0
