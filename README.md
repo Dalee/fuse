@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Dalee/fuse.svg?branch=master)](https://travis-ci.org/Dalee/fuse)
 [![Coverage](https://codecov.io/gh/Dalee/fuse/branch/master/graph/badge.svg)](https://codecov.io/gh/Dalee/fuse)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Dalee/fuse)](https://goreportcard.com/report/github.com/Dalee/fuse)
 
 
 Simple tool build around `kubectl` command, great for CI/CD environments.
