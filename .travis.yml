@@ -18,4 +18,4 @@ script:
   - make coverage
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -f ./coverage.txt
+  - bash <(curl -s https://codecov.io/bash) -f ./coverage.out
