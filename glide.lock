@@ -1,8 +1,12 @@
-hash: a42c3dbce886599693c4d61d05ea9552f336a29e07e0c6fb5c35172773d80b95
-updated: 2017-02-14T20:11:36.827913057+03:00
+hash: 1c909f7cea030625d1ebcbf4e6208dcda973fac3d878057b2ed27fd0a49e3914
+updated: 2017-02-15T20:36:12.225047741+03:00
 imports:
 - name: github.com/Dalee/hitman
   version: c2ef72e49cbcad7d2c8a2d8fc94a726b390cd406
+  subpackages:
+  - pkg/registry
+- name: github.com/forestgiant/sliceutil
+  version: 94783f95db6c58ab095b288839b769ca549dd4b4
 - name: github.com/ghodss/yaml
   version: 04f313413ffd65ce25f2541bfd2b2ceec5c0908c
 - name: github.com/inconshreveable/mousetrap
@@ -20,6 +24,12 @@ imports:
   subpackages:
   - assert
   - mock
+- name: golang.org/x/net
+  version: 236b8f043b920452504e263bc21d354427127473
+  subpackages:
+  - publicsuffix
+- name: gopkg.in/resty.v0
+  version: 2e0c2310ba20c7edb6162ea2f6c0d5bba2e5e56d
 - name: gopkg.in/yaml.v2
   version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports:
