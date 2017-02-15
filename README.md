@@ -192,11 +192,22 @@ if you want.
  * Golang >= 1.7.x
  * [golint](https://github.com/golang/lint)
  * [glide](https://github.com/Masterminds/glide)
+ * [gover](https://github.com/modocache/gover)
  * make
 
+
+Install developer dependencies:
+```
+$ go get -u github.com/modocache/gover && \
+go get -u github.com/golang/lint/golint && \
+go get -u github.com/Masterminds/glide
+```
+
+Install project dependencies:
 ```
 $ glide install
-... work work work
-
-$ make test && make lint
 ```
+
+Test and Coverage
+ * `make test` — linting and testing
+ * `make coverage && go tool cover -html=coverage.out` — see coverage
