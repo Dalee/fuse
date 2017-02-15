@@ -1,5 +1,9 @@
 # &#9179;
 
+[![Build Status](https://travis-ci.org/Dalee/fuse.svg?branch=master)](https://travis-ci.org/Dalee/fuse)
+[![Coverage](https://codecov.io/gh/Dalee/fuse/branch/master/graph/badge.svg)](https://codecov.io/gh/Dalee/fuse)
+
+
 Simple tool build around `kubectl` command, great for CI/CD environments.
 
 Key features:
