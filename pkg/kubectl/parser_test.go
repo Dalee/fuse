@@ -121,7 +121,37 @@ metadata:
 
 	n := nlist[0]
 	assert.Equal(t, "namespace", n.GetKind())
-	assert.Equal(t, "kube-system", n.Metadata.Name)
+	assert.Equal(t, "kube-system", n.GetName())
+}
+
+// ensure namespace parsing is ok
+func TestParseNamespaceMultipleDefinitions(t *testing.T) {
+	rawYamlString := `
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kube-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-new-shiny-namespace
+`
+	p := newParser()
+	result, err := p.parseYaml([]byte(rawYamlString))
+	assert.Nil(t, err)
+	assert.Len(t, result, 2)
+
+	nlist := ToNamespaceList(result)
+	assert.Len(t, nlist, 2)
+
+	n1 := nlist[0]
+	assert.Equal(t, "namespace", n1.GetKind())
+	assert.Equal(t, "kube-system", n1.GetName())
+
+	n2 := nlist[1]
+	assert.Equal(t, "namespace", n2.GetKind())
+	assert.Equal(t, "my-new-shiny-namespace", n2.GetName())
 }
 
 
