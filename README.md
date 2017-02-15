@@ -1,8 +1,6 @@
 # &#9179;
 
-Simple tool build around `kubectl` command.
-
-> Great for CI/CD environments
+Simple tool build around `kubectl` command, great for CI/CD environments.
 
 Key features:
  * Deploy new release to cluster with automated rollback in case of error
@@ -29,7 +27,7 @@ Flags:
   -f, --configuration string   Release configuration yaml file
 ```
 
-### What will happen?
+### What `apply` command do?
 
   * `fuse` will get all deployments defined in yml file
   * for each deployment defined in yml file fuse will fetch info from k8s cluster
@@ -93,7 +91,7 @@ Flags:
       --registry-url string   Registry URL to use (e.g. https://example.com:5000/)
 ```
 
-### What will happen?
+### What `garbage-collect` command do?
 
   * `fuse` will search all replica sets for given namespace (`default` is by default)
   * For each replica set `Spec.Template.Spec.Containers[].Image` will be analyzed
@@ -101,10 +99,11 @@ Flags:
   * If some of repositories absent in provided `registry-url`, error will be thrown, unless `ignore-missing` is set
   * For each founded image repository, all tags not registered in replica set (i.e. not deployed or stale)
     will be marked for deletion
-  * If `dry-run` is not set, images digests marked for deletion will be deleted
+  * If `dry-run` is not set, images digests, marked for deletion, will be marked for deletion in Registry 
+  (Beware: Registry itself has own `garbage-collection` command)
 
-
-> Don't forget to schedule [garbage-collect](https://docs.docker.com/registry/garbage-collection/) command
+> Do not forget to schedule [Registry garbage-collect](https://docs.docker.com/registry/garbage-collection/) command
+to perform actual cleanup of deleted images!
 
 ### Sample output
 
