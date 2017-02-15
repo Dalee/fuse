@@ -4,7 +4,7 @@ test:
 
 coverage:
 	golint -set_exit_status ./pkg/... ./bin/...
-	go list -f '"go test -v -covermode=atomic -coverprofile={{.Dir}}/.coverprofile {{.ImportPath}}"' ./pkg/... | xargs -I % sh -c %
+	go list -f '"go test -covermode=atomic -coverprofile={{.Dir}}/.coverprofile {{.ImportPath}}"' ./pkg/... | xargs -I % sh -c %
 	gover ./ ./coverage.out
 
 build:

@@ -35,8 +35,15 @@ func (cm *kubeCommandMock) getCommand() (*exec.Cmd) {
 
 // implement interface for kubeParserMock
 func (pm *kubeParserMock) parseYaml(data []byte) ([]KubeResourceInterface, error) {
-	args := pm.Called(data)
-	return args.Get(0).([]KubeResourceInterface), args.Error(1)
+	var parsedResource []KubeResourceInterface
+	args := pm.Called()
+
+	passedResult := args.Get(0)
+	if passedResult != nil {
+		parsedResource = passedResult.([]KubeResourceInterface)
+	}
+
+	return parsedResource, args.Error(1)
 }
 
 func TestKubeCall_RunPlain(t *testing.T) {
@@ -59,7 +66,7 @@ func TestKubeCall_RunNormal(t *testing.T) {
 	cmdMock.On("Run").Return([]byte(""), true)
 
 	parserMock := new(kubeParserMock)
-	parserMock.On("parseYaml", []byte("")).Return(make([]KubeResourceInterface, 0), nil)
+	parserMock.On("parseYaml").Return(make([]KubeResourceInterface, 0), nil)
 
 	call := &KubeCall{
 		Cmd: cmdMock,
@@ -82,7 +89,7 @@ func TestKubeCall_RunAndParseFirst(t *testing.T) {
 	})
 
 	parserMock := new(kubeParserMock)
-	parserMock.On("parseYaml", []byte("")).Return(parsedList, nil)
+	parserMock.On("parseYaml").Return(parsedList, nil)
 
 	call := &KubeCall{
 		Cmd: cmdMock,
@@ -101,7 +108,7 @@ func TestKubeCall_RunCommandFailed(t *testing.T) {
 	cmdMock.On("Run").Return([]byte(""), false)
 
 	parserMock := new(kubeParserMock)
-	parserMock.On("parseYaml", []byte("")).Return(make([]KubeResourceInterface, 0), nil)
+	parserMock.On("parseYaml").Return(make([]KubeResourceInterface, 0), nil)
 
 	call := &KubeCall{
 		Cmd: cmdMock,
@@ -118,7 +125,7 @@ func TestKubeCall_RunParserFailed(t *testing.T) {
 	cmdMock.On("Run").Return([]byte(""), false)
 
 	parserMock := new(kubeParserMock)
-	parserMock.On("parseYaml", []byte("")).Return(nil, errors.New("Something wrong with parser"))
+	parserMock.On("parseYaml").Return(nil, errors.New("Something wrong with parser"))
 
 	call := &KubeCall{
 		Cmd: cmdMock,
@@ -126,7 +133,7 @@ func TestKubeCall_RunParserFailed(t *testing.T) {
 	}
 
 	items, err := call.RunAndParse()
-	assert.Error(t, err, "Failed to decode output")
+	assert.Error(t, err)
 	assert.Nil(t, items)
 }
 
@@ -150,10 +157,10 @@ func TestCommandReplicaSetList(t *testing.T) {
 
 //
 func TestCommandReplicaSetListWithDefaultNamespace(t *testing.T) {
-	cmd := CommandDeploymentList("")
+	cmd := CommandReplicaSetList("")
 
 	args := strings.Join(cmd.Cmd.getCommand().Args, " ")
-	assert.Equal(t, "kubectl --namespace=default get deployments -o yaml", args)
+	assert.Equal(t, "kubectl --namespace=default get replicasets -o yaml", args)
 }
 
 // get deployments in namespace
