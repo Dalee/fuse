@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 
 	"fuse/pkg/kubectl"
 	"fuse/pkg/reference"
@@ -24,12 +24,12 @@ var gcCommand = &cobra.Command{
 	Use:   "garbage-collect",
 	Short: "Remove tags from registry not registered within any Kubernetes ReplicaSet",
 	Long:  ``,
-	RunE: garbageCollectHandler,
+	RunE:  garbageCollectHandler,
 }
 
 //
 //
-func garbageCollectHandler(cmd *cobra.Command, args []string) (error) {
+func garbageCollectHandler(cmd *cobra.Command, args []string) error {
 	registryURL, err := cmd.Flags().GetString("registry-url")
 	if err != nil {
 		return err

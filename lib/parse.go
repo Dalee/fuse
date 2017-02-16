@@ -58,12 +58,12 @@ func splitYAMLDocument(data []byte, atEOF bool) (advance int, token []byte, err 
 		if len(after) == 0 {
 			// we can't read any more characters
 			if atEOF {
-				return len(data), data[:len(data) - sep], nil
+				return len(data), data[:len(data)-sep], nil
 			}
 			return 0, nil, nil
 		}
 		if j := bytes.IndexByte(after, '\n'); j >= 0 {
-			return i + j + 1, data[0 : i - sep], nil
+			return i + j + 1, data[0 : i-sep], nil
 		}
 		return 0, nil, nil
 	}

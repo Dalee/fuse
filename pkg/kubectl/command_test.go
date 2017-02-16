@@ -1,10 +1,10 @@
 package kubectl
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
-	"strings"
 	"os"
+	"strings"
+	"testing"
 )
 
 // ensure command will be created without cluster context

@@ -5,7 +5,7 @@ import (
 	"os/exec"
 )
 
-func CommandFactory(context string, args[] string) *exec.Cmd {
+func CommandFactory(context string, args []string) *exec.Cmd {
 	argList := make([]string, 0)
 	if context != "" {
 		argList = append(argList, fmt.Sprintf("--context=%s", context))

@@ -1,8 +1,7 @@
 package kubectl
 
-
 // ToDeploymentList is helper to convert []KubeResourceInterface to []Deployment
-func ToDeploymentList(list []KubeResourceInterface) ([]Deployment) {
+func ToDeploymentList(list []KubeResourceInterface) []Deployment {
 	dlist := make([]Deployment, 0)
 	for _, item := range list {
 		d, ok := item.(*Deployment)
@@ -17,10 +16,10 @@ func ToDeploymentList(list []KubeResourceInterface) ([]Deployment) {
 }
 
 // ToReplicaSetList is helper to convert []KubeResourceInterface to []ReplicaSet
-func ToReplicaSetList(list []KubeResourceInterface) ([]ReplicaSet) {
+func ToReplicaSetList(list []KubeResourceInterface) []ReplicaSet {
 	rlist := make([]ReplicaSet, 0)
 	for _, item := range list {
-		r, ok := item.(*ReplicaSet);
+		r, ok := item.(*ReplicaSet)
 		if !ok {
 			panic("Unable to typecase to ReplicaSet")
 		}
@@ -32,10 +31,10 @@ func ToReplicaSetList(list []KubeResourceInterface) ([]ReplicaSet) {
 }
 
 // ToNamespaceList is helper to convert []KubeResourceInterface type to []Namespace
-func ToNamespaceList(list []KubeResourceInterface) ([]Namespace) {
+func ToNamespaceList(list []KubeResourceInterface) []Namespace {
 	nlist := make([]Namespace, 0)
 	for _, item := range list {
-		n, ok := item.(*Namespace);
+		n, ok := item.(*Namespace)
 		if !ok {
 			panic("Unable to typecase to NameSpace")
 		}

@@ -1,15 +1,15 @@
 package kubectl
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestReplicaSet_Types(t *testing.T) {
 	rs := ReplicaSet{
 		Kind: "ReplicaSet",
 		Metadata: kubeTypeMetadata{
-			Name: "test-replicaset-42",
+			Name:      "test-replicaset-42",
 			Namespace: "default",
 		},
 		Spec: kubeTypeResourceSpec{
@@ -34,7 +34,7 @@ func TestDeployment_Types(t *testing.T) {
 	d := Deployment{
 		Kind: "Deployment",
 		Metadata: kubeTypeMetadata{
-			Name: "test-deployment",
+			Name:      "test-deployment",
 			Namespace: "default",
 		},
 	}

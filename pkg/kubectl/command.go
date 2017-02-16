@@ -2,8 +2,8 @@ package kubectl
 
 import (
 	"fmt"
-	"os/exec"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -11,7 +11,7 @@ type (
 	kubeCommandInterface interface {
 		Log()
 		Run() ([]byte, bool)
-		getCommand() (*exec.Cmd)
+		getCommand() *exec.Cmd
 	}
 
 	kubeCommand struct {
@@ -20,12 +20,12 @@ type (
 )
 
 // Easy to use wrapper
-func newCommand(args []string) (kubeCommandInterface) {
+func newCommand(args []string) kubeCommandInterface {
 	return newCommandWithBinary(args, "kubectl")
 }
 
 // More advanced wrapper which allows you to override binary to run
-func newCommandWithBinary(args []string, binary string) (*kubeCommand) {
+func newCommandWithBinary(args []string, binary string) *kubeCommand {
 	argList := make([]string, 0)
 	if context := os.Getenv("CLUSTER_CONTEXT"); context != "" {
 		argList = append(argList, fmt.Sprintf("--context=%s", context))
@@ -53,6 +53,6 @@ func (c *kubeCommand) Run() ([]byte, bool) {
 }
 
 // Command getter
-func (c *kubeCommand) getCommand() (*exec.Cmd) {
+func (c *kubeCommand) getCommand() *exec.Cmd {
 	return c.cmd
 }

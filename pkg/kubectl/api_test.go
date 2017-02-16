@@ -1,13 +1,13 @@
 package kubectl
 
 import (
-	"testing"
-	"strings"
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"os/exec"
-	"errors"
 	"os"
+	"os/exec"
+	"strings"
+	"testing"
 )
 
 type (
@@ -29,7 +29,7 @@ func (cm *kubeCommandMock) Run() ([]byte, bool) {
 	return args.Get(0).([]byte), args.Bool(1)
 }
 
-func (cm *kubeCommandMock) getCommand() (*exec.Cmd) {
+func (cm *kubeCommandMock) getCommand() *exec.Cmd {
 	return nil
 }
 
@@ -51,7 +51,7 @@ func TestKubeCall_RunPlain(t *testing.T) {
 	cmdMock.On("Run").Return([]byte("Hello world"), true)
 
 	call := &KubeCall{
-		Cmd: cmdMock,
+		Cmd:    cmdMock,
 		Parser: nil,
 	}
 
@@ -69,7 +69,7 @@ func TestKubeCall_RunNormal(t *testing.T) {
 	parserMock.On("parseYaml").Return(make([]KubeResourceInterface, 0), nil)
 
 	call := &KubeCall{
-		Cmd: cmdMock,
+		Cmd:    cmdMock,
 		Parser: parserMock,
 	}
 
@@ -92,7 +92,7 @@ func TestKubeCall_RunAndParseFirst(t *testing.T) {
 	parserMock.On("parseYaml").Return(parsedList, nil)
 
 	call := &KubeCall{
-		Cmd: cmdMock,
+		Cmd:    cmdMock,
 		Parser: parserMock,
 	}
 
@@ -111,7 +111,7 @@ func TestKubeCall_RunCommandFailed(t *testing.T) {
 	parserMock.On("parseYaml").Return(make([]KubeResourceInterface, 0), nil)
 
 	call := &KubeCall{
-		Cmd: cmdMock,
+		Cmd:    cmdMock,
 		Parser: parserMock,
 	}
 
@@ -128,7 +128,7 @@ func TestKubeCall_RunParserFailed(t *testing.T) {
 	parserMock.On("parseYaml").Return(nil, errors.New("Something wrong with parser"))
 
 	call := &KubeCall{
-		Cmd: cmdMock,
+		Cmd:    cmdMock,
 		Parser: parserMock,
 	}
 

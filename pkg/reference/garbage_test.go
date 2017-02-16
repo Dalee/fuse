@@ -1,11 +1,11 @@
 package reference
 
 import (
-	"testing"
-	"github.com/stretchr/testify/mock"
+	"errors"
 	"github.com/Dalee/hitman/pkg/registry"
 	"github.com/stretchr/testify/assert"
-	"errors"
+	"github.com/stretchr/testify/mock"
+	"testing"
 )
 
 type (
@@ -51,19 +51,19 @@ func TestDetectGarbage_NormalCase(t *testing.T) {
 	//
 	registryList1 := new(registry.RepositoryDigestList)
 	registryList1.Children = append(registryList1.Children, &registry.RepositoryDigest{
-		Name: "sha256:sample-repo1-randomdigestnumber-1",
-		Path: "sample/repo1",
+		Name:    "sha256:sample-repo1-randomdigestnumber-1",
+		Path:    "sample/repo1",
 		TagList: []string{"3"},
 	})
 	registryList1.Children = append(registryList1.Children, &registry.RepositoryDigest{
-		Name: "sha256:sample-repo1-randomdigestnumber-2",
-		Path: "sample/repo1",
+		Name:    "sha256:sample-repo1-randomdigestnumber-2",
+		Path:    "sample/repo1",
 		TagList: []string{"4"},
 	})
 	// this one is wrong and should be deleted
 	registryList1.Children = append(registryList1.Children, &registry.RepositoryDigest{
-		Name: "sha256:sample-repo1-randomdigestnumber-3",
-		Path: "sample/repo1",
+		Name:    "sha256:sample-repo1-randomdigestnumber-3",
+		Path:    "sample/repo1",
 		TagList: []string{"5", "latest"},
 	})
 
@@ -72,19 +72,19 @@ func TestDetectGarbage_NormalCase(t *testing.T) {
 	//
 	registryList2 := new(registry.RepositoryDigestList)
 	registryList2.Children = append(registryList2.Children, &registry.RepositoryDigest{
-		Name: "sha256:sample-repo2-randomdigestnumber-1",
-		Path: "sample/repo2",
+		Name:    "sha256:sample-repo2-randomdigestnumber-1",
+		Path:    "sample/repo2",
 		TagList: []string{"v26"},
 	})
 	registryList2.Children = append(registryList2.Children, &registry.RepositoryDigest{
-		Name: "sha256:sample-repo2-randomdigestnumber-2",
-		Path: "sample/repo2",
+		Name:    "sha256:sample-repo2-randomdigestnumber-2",
+		Path:    "sample/repo2",
 		TagList: []string{"v27"},
 	})
 	// this one is wrong
 	registryList2.Children = append(registryList2.Children, &registry.RepositoryDigest{
-		Name: "sha256:sample-repo2-randomdigestnumber-3",
-		Path: "sample/repo2",
+		Name:    "sha256:sample-repo2-randomdigestnumber-3",
+		Path:    "sample/repo2",
 		TagList: []string{"v28", "latest"},
 	})
 
@@ -154,7 +154,6 @@ func TestDetectGarbage_RegistryCallFailedNoError(t *testing.T) {
 	assert.Equal(t, []string{}, garbageItem.GarbageDigestList)
 }
 
-
 //
 func TestDetectGarbage_ImageNotFoundError(t *testing.T) {
 	deployedList := []string{
@@ -163,8 +162,8 @@ func TestDetectGarbage_ImageNotFoundError(t *testing.T) {
 
 	registryList := new(registry.RepositoryDigestList)
 	registryList.Children = append(registryList.Children, &registry.RepositoryDigest{
-		Name: "sha256:sample-repo2-randomdigestnumber-1",
-		Path: "sample/repo",
+		Name:    "sha256:sample-repo2-randomdigestnumber-1",
+		Path:    "sample/repo",
 		TagList: []string{"latest", "v1.2.3"},
 	})
 
@@ -185,8 +184,8 @@ func TestDetectGarbage_ImageNotFoundSkipMissing(t *testing.T) {
 
 	registryList := new(registry.RepositoryDigestList)
 	registryList.Children = append(registryList.Children, &registry.RepositoryDigest{
-		Name: "sha256:sample-repo2-randomdigestnumber-1",
-		Path: "sample/repo",
+		Name:    "sha256:sample-repo2-randomdigestnumber-1",
+		Path:    "sample/repo",
 		TagList: []string{"latest", "v1.2.3"},
 	})
 

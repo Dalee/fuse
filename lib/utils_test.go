@@ -1,8 +1,8 @@
 package lib
 
 import (
-	"testing"
 	"os/exec"
+	"testing"
 )
 
 func TestCommandRun(t *testing.T) {
