@@ -55,7 +55,7 @@ func (c *KubeCall) RunAndParseFirst() (KubeResourceInterface, error) {
 }
 
 // CommandNamespaceList return call which will return list of namespaces registered in kubernetes cluster
-func CommandNamespaceList() (*KubeCall) {
+func CommandNamespaceList() *KubeCall {
 	p := newParser()
 	c := newCommand([]string{
 		"get",
@@ -65,13 +65,13 @@ func CommandNamespaceList() (*KubeCall) {
 	})
 
 	return &KubeCall{
-		Cmd: c,
+		Cmd:    c,
 		Parser: p,
 	}
 }
 
 // CommandReplicaSetList return call which return list of replicasets registered in kubernetes cluster
-func CommandReplicaSetList(namespace string) (*KubeCall) {
+func CommandReplicaSetList(namespace string) *KubeCall {
 	if namespace == "" {
 		namespace = "default"
 	}
@@ -86,13 +86,13 @@ func CommandReplicaSetList(namespace string) (*KubeCall) {
 	})
 
 	return &KubeCall{
-		Cmd: c,
+		Cmd:    c,
 		Parser: p,
 	}
 }
 
 // CommandDeploymentList return call which return list of deployments registered in kubernetes clusted
-func CommandDeploymentList(namespace string) (*KubeCall) {
+func CommandDeploymentList(namespace string) *KubeCall {
 	if namespace == "" {
 		namespace = "default"
 	}
@@ -107,7 +107,7 @@ func CommandDeploymentList(namespace string) (*KubeCall) {
 	})
 
 	return &KubeCall{
-		Cmd: c,
+		Cmd:    c,
 		Parser: p,
 	}
 }

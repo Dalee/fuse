@@ -4,12 +4,12 @@ package cmd
 
 import (
 	"fmt"
-	"time"
-	"os"
+	"fuse/lib"
 	"github.com/spf13/cobra"
 	"io/ioutil"
-	"fuse/lib"
+	"os"
 	"path/filepath"
+	"time"
 )
 
 func init() {
@@ -21,13 +21,13 @@ var applyCmd = &cobra.Command{
 	Use:   "apply",
 	Short: "Perform safe deployment to Kubernetes cluster",
 	Long:  `Apply new configuration to Kubernetes cluster and monitor release delivery`,
-	RunE: applyHandler,
+	RunE:  applyHandler,
 }
 
 //
 // apply entry point
 //
-func applyHandler(cmd *cobra.Command, args []string) (error) {
+func applyHandler(cmd *cobra.Command, args []string) error {
 	// fetch configuration
 	deployFilename, err := cmd.Flags().GetString("configuration")
 	if err != nil {
@@ -183,7 +183,7 @@ func applyHandler(cmd *cobra.Command, args []string) (error) {
 		os.Exit(127)
 
 	} else {
-		fmt.Println("==> Success: deploy successfull")
+		fmt.Println("==> Success: deploy successful")
 		os.Exit(0)
 	}
 

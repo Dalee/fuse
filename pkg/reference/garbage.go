@@ -1,8 +1,8 @@
 package reference
 
 import (
-	"github.com/Dalee/hitman/pkg/registry"
 	"fmt"
+	"github.com/Dalee/hitman/pkg/registry"
 	"strings"
 )
 
@@ -61,7 +61,6 @@ func SliceHasItemsInSlice(src, dst []string) bool {
 	}
 	return false
 }
-
 
 // DetectGarbage will detect garbage for a given set of deployed image references
 func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing bool) (*GarbageDetectInfo, error) {
@@ -126,8 +125,8 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 	for _, repositoryPath := range deployedImagesList {
 		deployedTagList := deployedImages[repositoryPath]
 		detectItem := &GarbageDetectItem{
-			Repository: repositoryPath,
-			DeployedTagList: deployedTagList,
+			Repository:        repositoryPath,
+			DeployedTagList:   deployedTagList,
 			GarbageDigestList: []string{},
 		}
 

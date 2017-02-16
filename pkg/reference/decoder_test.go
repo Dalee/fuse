@@ -1,8 +1,8 @@
 package reference
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestDecodeImage(t *testing.T) {
@@ -18,71 +18,71 @@ func TestDecodeImage(t *testing.T) {
 	}{
 		{
 			input: "test_com",
-			err: ErrReferenceInvalidFormat,
+			err:   ErrReferenceInvalidFormat,
 		},
 		{
-			input: "very.long.domain.registry:8080/test.com/repo:tag",
+			input:      "very.long.domain.registry:8080/test.com/repo:tag",
 			repository: "test.com/repo",
-			tag: "tag",
-			registry: "very.long.domain.registry:8080",
+			tag:        "tag",
+			registry:   "very.long.domain.registry:8080",
 		},
 		{
-			input: "example.com:5000/sample/unknown-repo:latest",
+			input:      "example.com:5000/sample/unknown-repo:latest",
 			repository: "sample/unknown-repo",
-			tag: "latest",
-			registry: "example.com:5000",
+			tag:        "latest",
+			registry:   "example.com:5000",
 		},
 		{
-			input: "test.com:tag",
-			registry: "",
+			input:      "test.com:tag",
+			registry:   "",
 			repository: "test.com",
-			tag: "tag",
+			tag:        "tag",
 		},
 		{
-			input: "test.com:5000",
-			registry: "",
+			input:      "test.com:5000",
+			registry:   "",
 			repository: "test.com",
-			tag: "5000",
+			tag:        "5000",
 		},
 		{
-			input: "test.com/repo:tag",
+			input:      "test.com/repo:tag",
 			repository: "repo",
-			tag: "tag",
-			registry: "test.com",
+			tag:        "tag",
+			registry:   "test.com",
 		},
 		{
 			input: "test:5000/repo",
-			err: ErrReferenceInvalidFormat,
+			err:   ErrReferenceInvalidFormat,
 		},
 		{
-			input: "test:5000/repo:tag",
+			input:      "test:5000/repo:tag",
 			repository: "repo",
-			tag: "tag",
-			registry: "test:5000",
+			tag:        "tag",
+			registry:   "test:5000",
 		},
 		{
-			input: "test:5000/repo:v1.2.3",
+			input:      "test:5000/repo:v1.2.3",
 			repository: "repo",
-			tag: "v1.2.3",
-			registry: "test:5000",
+			tag:        "v1.2.3",
+			registry:   "test:5000",
 		},
 		{
 			input: "test:5000/repo@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-			err: ErrReferenceInvalidFormat,
+			err:   ErrReferenceInvalidFormat,
 		},
 		{
-			input: "test:5000/repo:tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			input:      "test:5000/repo:tag@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
 			repository: "repo",
-			tag: "tag",
-			registry: "test:5000",
+			tag:        "tag",
+			registry:   "test:5000",
 		},
 		{
 			input: ":justtag",
-			err: ErrReferenceInvalidFormat,
+			err:   ErrReferenceInvalidFormat,
 		},
 		{
 			input: "@sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-			err: ErrReferenceInvalidFormat,
+			err:   ErrReferenceInvalidFormat,
 		},
 	}
 

@@ -1,8 +1,8 @@
 package lib
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 type KubeTypeMetadata struct {
@@ -18,9 +18,9 @@ type KubeTypeStatus struct {
 }
 
 type KubeType struct {
-	Kind     string `yaml:"kind"`
+	Kind     string           `yaml:"kind"`
 	Metadata KubeTypeMetadata `yaml:"metadata"`
-	Status   KubeTypeStatus `yaml:"status"`
+	Status   KubeTypeStatus   `yaml:"status"`
 	Deployed bool
 }
 

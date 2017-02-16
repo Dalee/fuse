@@ -1,8 +1,8 @@
 package kubectl
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 // ensure unknown type is not parsed
@@ -36,7 +36,6 @@ random: "string"
 	assert.Nil(t, err)
 	assert.Len(t, result, 0)
 }
-
 
 // ensure parse deployments works as expected
 func TestParseDeployment(t *testing.T) {
@@ -154,7 +153,6 @@ metadata:
 	assert.Equal(t, "my-new-shiny-namespace", n2.GetName())
 }
 
-
 // ensure parse list with namespace items works as expected
 func TestParseNamespaceList(t *testing.T) {
 	rawYamlString := `---
@@ -189,7 +187,6 @@ metadata: {}
 	assert.Equal(t, "namespace", n2.GetKind())
 	assert.Equal(t, "kube-system", n2.Metadata.Name)
 }
-
 
 // ensure parse list with namespace items works as expected
 func TestParseDeploymentList(t *testing.T) {

@@ -1,8 +1,8 @@
 package lib
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestFormatCommandWithCluster(t *testing.T) {

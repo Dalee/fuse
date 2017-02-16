@@ -35,15 +35,15 @@ type (
 	}
 
 	kubeResourceList struct {
-		Kind  string `yaml:"kind"`
+		Kind  string         `yaml:"kind"`
 		Items []kubeResource `yaml:"items"`
 	}
 
 	kubeResource struct {
-		Kind     string `yaml:"kind"`
-		Metadata kubeTypeMetadata `yaml:"metadata"`
+		Kind     string               `yaml:"kind"`
+		Metadata kubeTypeMetadata     `yaml:"metadata"`
 		Spec     kubeTypeResourceSpec `yaml:"spec"`
-		Status   kubeTypeStatus `yaml:"status"`
+		Status   kubeTypeStatus       `yaml:"status"`
 	}
 
 	kubeResourceListInterface interface {
@@ -70,23 +70,23 @@ type (
 
 	// Deployment is k8s Deployment resource
 	Deployment struct {
-		Kind     string `yaml:"kind"`
-		Metadata kubeTypeMetadata `yaml:"metadata"`
+		Kind     string               `yaml:"kind"`
+		Metadata kubeTypeMetadata     `yaml:"metadata"`
 		Spec     kubeTypeResourceSpec `yaml:"spec"`
-		Status   kubeTypeStatus `yaml:"status"`
+		Status   kubeTypeStatus       `yaml:"status"`
 	}
 
 	// ReplicaSet is k8s ReplicaSet resource
 	ReplicaSet struct {
-		Kind     string `yaml:"kind"`
-		Metadata kubeTypeMetadata `yaml:"metadata"`
+		Kind     string               `yaml:"kind"`
+		Metadata kubeTypeMetadata     `yaml:"metadata"`
 		Spec     kubeTypeResourceSpec `yaml:"spec"`
-		Status   kubeTypeStatus `yaml:"status"`
+		Status   kubeTypeStatus       `yaml:"status"`
 	}
 
 	// Namespace is k8s Namespace resource
 	Namespace struct {
-		Kind     string `yaml:"kind"`
+		Kind     string           `yaml:"kind"`
 		Metadata kubeTypeMetadata `yaml:"metadata"`
 	}
 )
@@ -147,7 +147,6 @@ func (rl *replicaSetList) GetItems() []KubeResourceInterface {
 	}
 	return r
 }
-
 
 // GetKind interface method support, returns string "namespace"
 func (n *Namespace) GetKind() string {

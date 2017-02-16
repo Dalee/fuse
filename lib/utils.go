@@ -1,8 +1,8 @@
 package lib
 
 import (
-	"os/exec"
 	"fmt"
+	"os/exec"
 	"strings"
 )
 

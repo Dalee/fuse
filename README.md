@@ -68,7 +68,7 @@ Flags:
 [13:14:32][Step 4/5] ==> Executing: kubectl get deployment/cdss-staging -o yaml
 [13:14:32][Step 4/5] ==> Notice: no unavailable replicas found, assuming ok
 [13:14:32][Step 4/5] ==> Success: All deployments marked as ok..
-[13:14:32][Step 4/5] ==> Success: deploy successfull
+[13:14:32][Step 4/5] ==> Success: deploy successful
 [13:14:32][Step 4/5] Process exited with code 0
 ```
 
@@ -201,7 +201,9 @@ Install developer dependencies:
 ```
 $ go get -u github.com/modocache/gover && \
 go get -u github.com/golang/lint/golint && \
-go get -u github.com/Masterminds/glide
+go get -u github.com/Masterminds/glide && \
+go get -u github.com/gordonklaus/ineffassign && \
+go get -u github.com/client9/misspell/cmd/misspell
 ```
 
 Install project dependencies:
