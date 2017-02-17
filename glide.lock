@@ -1,8 +1,8 @@
-hash: 1c909f7cea030625d1ebcbf4e6208dcda973fac3d878057b2ed27fd0a49e3914
-updated: 2017-02-15T20:36:12.225047741+03:00
+hash: ce947e5c93de78b75c1f4413fcb91d9e58b7e6a04718f8091cbf3f6a4b3a51e8
+updated: 2017-02-17T17:03:47.178226448+03:00
 imports:
 - name: github.com/Dalee/hitman
-  version: c2ef72e49cbcad7d2c8a2d8fc94a726b390cd406
+  version: f86df5948ec31df8f3ccd45cdd5882a11b174256
   subpackages:
   - pkg/registry
 - name: github.com/forestgiant/sliceutil
