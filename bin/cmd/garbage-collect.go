@@ -10,6 +10,20 @@ import (
 	"github.com/Dalee/hitman/pkg/registry"
 	"github.com/spf13/cobra"
 	"time"
+	"github.com/spf13/cobra/cobra/cmd"
+)
+
+var (
+	gcCommand = &cobra.Command{
+		Use:   "garbage-collect",
+		Short: "Remove tags from registry not registered within any Kubernetes ReplicaSet",
+		Long:  ``,
+		RunE:  garbageCollectHandler,
+	}
+
+	dryRun = false
+	registryURL = ""
+	namespace = ""
 )
 
 func init() {
@@ -20,38 +34,24 @@ func init() {
 	RootCmd.AddCommand(gcCommand)
 }
 
-var gcCommand = &cobra.Command{
-	Use:   "garbage-collect",
-	Short: "Remove tags from registry not registered within any Kubernetes ReplicaSet",
-	Long:  ``,
-	RunE:  garbageCollectHandler,
+func parseFlags(cmd *cobra.Command) {
+	dryRun, _ = cmd.Flags().GetBool("dry-run")
+	registryURL, _ = cmd.Flags().GetString("registry-url")
+	namespace, _ = cmd.Flags().GetString("namespace")
 }
 
 //
-//
 func garbageCollectHandler(cmd *cobra.Command, args []string) error {
-	registryURL, err := cmd.Flags().GetString("registry-url")
-	if err != nil {
-		return err
-	}
-
-	namespace, err := cmd.Flags().GetString("namespace")
-	if err != nil {
-		return err
-	}
-
-	// get dry-run flag
-	dryRun, err := cmd.Flags().GetBool("dry-run")
-	if err != nil {
-		return err
-	}
+	// parse passed flags
+	parseFlags(cmd)
 
 	// constructing registry client
 	if registryURL == "" {
 		return errors.New("registry-url is a mandatory parameter")
 	}
+
 	registryClient := registry.New(registryURL)
-	if registryClient.IsValidUrl() == false {
+	if registryClient.IsValidURL() == false {
 		return fmt.Errorf("Request to %s/v2/ failed, is URL pointed to Docker Registry?", registryURL)
 	}
 

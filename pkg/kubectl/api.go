@@ -3,6 +3,7 @@ package kubectl
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type (
@@ -72,13 +73,9 @@ func CommandNamespaceList() *KubeCall {
 
 // CommandReplicaSetList return call which return list of replicasets registered in kubernetes cluster
 func CommandReplicaSetList(namespace string) *KubeCall {
-	if namespace == "" {
-		namespace = "default"
-	}
-
 	p := newParser()
 	c := newCommand([]string{
-		fmt.Sprintf("--namespace=%s", namespace),
+		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
 		"get",
 		"replicasets",
 		"-o",
@@ -93,13 +90,9 @@ func CommandReplicaSetList(namespace string) *KubeCall {
 
 // CommandDeploymentList return call which return list of deployments registered in kubernetes clusted
 func CommandDeploymentList(namespace string) *KubeCall {
-	if namespace == "" {
-		namespace = "default"
-	}
-
 	p := newParser()
 	c := newCommand([]string{
-		fmt.Sprintf("--namespace=%s", namespace),
+		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
 		"get",
 		"deployments",
 		"-o",
@@ -110,4 +103,43 @@ func CommandDeploymentList(namespace string) *KubeCall {
 		Cmd:    c,
 		Parser: p,
 	}
+}
+
+func CommandPodList(namespace string, selector []string) *KubeCall {
+	selectorList := strings.Join(selector, ",")
+	p := newParser()
+	c := newCommand([]string{
+		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
+		"get",
+		"pods",
+		fmt.Sprintf("--selector=%s", selectorList),
+		"-o",
+		"yaml",
+	})
+
+	return &KubeCall{
+		Cmd:    c,
+		Parser: p,
+	}
+}
+
+func CommandPodLogs(namespace, pod string) *KubeCall {
+	p := newParser()
+	c := newCommand([]string{
+		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
+		"logs",
+		pod,
+	})
+
+	return &KubeCall{
+		Cmd:    c,
+		Parser: p,
+	}
+}
+
+func formatNamespace(namespace string) string {
+	if namespace == "" {
+		namespace = "default"
+	}
+	return namespace
 }

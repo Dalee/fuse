@@ -94,16 +94,16 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 		imageInfo, err := api.GetImageDigestList(repositoryPath)
 		if err != nil {
 			// FIXME: either image is missed in repository or call failed
-			// FIXME: make it more clear, right now threat it as missing image
+			// FIXME: make it more clear, right now - threat it as missing image
 			if ignoreMissing == false {
-				return nil, fmt.Errorf(fmt.Sprintf("Unknown image: %s", repositoryPath))
+				return nil, fmt.Errorf("Unknown image: %s", repositoryPath)
 			}
 			continue
 		}
 
 		// part of code, which is way to allow simulate situation
-		// when registry answers something, but this something is
-		// not image requested (actually should never happen in real life)
+		// when registry answers something, but this something is not the image requested
+		// (actually this should never happen in real life)
 		found := true
 		for _, digest := range imageInfo.Children {
 			if strings.Compare(digest.Path, repositoryPath) != 0 {
@@ -118,10 +118,8 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 		}
 	}
 
-	// build repoPath: [digest, digest]
-	//garbageImages := make(map[string][]string)
+	// build garbage list
 	detectInfo := new(GarbageDetectInfo)
-
 	for _, repositoryPath := range deployedImagesList {
 		deployedTagList := deployedImages[repositoryPath]
 		detectItem := &GarbageDetectItem{
@@ -135,7 +133,7 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 		imageDigestList, ok := registryImages[repositoryPath]
 		if !ok {
 			if ignoreMissing == false {
-				return nil, fmt.Errorf(fmt.Sprintf("Unknown image: %s", repositoryPath))
+				return nil, fmt.Errorf("Unknown image: %s", repositoryPath)
 			}
 			continue
 		}

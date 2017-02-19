@@ -45,6 +45,9 @@ kind: Deployment
 metadata:
   name: test-deployment
   namespace: default
+  generation: 42
+  labels:
+    app: test-label
 spec:
   template:
     spec:
@@ -60,13 +63,18 @@ spec:
 	assert.Len(t, dlist, 1)
 
 	d := dlist[0]
-	assert.Equal(t, "deployment", d.GetKind())
-	assert.Equal(t, "test-deployment", d.Metadata.Name)
+	assert.Equal(t, KIND_DEPLOYMENT, d.GetKind())
+	assert.Equal(t, "test-deployment", d.GetName())
 	assert.Equal(t, "default", d.Metadata.Namespace)
 	assert.Len(t, d.Spec.Template.Spec.Containers, 1)
 
 	container := d.Spec.Template.Spec.Containers[0]
 	assert.Equal(t, "example.com/image:1", container.Image)
+
+	assert.Len(t, d.Metadata.Labels, 1)
+	assert.Equal(t, d.Metadata.Labels["app"], "test-label")
+
+	assert.Equal(t, d.Metadata.Generation, 42)
 }
 
 // ensure parse replicaset works as expected
@@ -93,8 +101,8 @@ spec:
 	assert.Len(t, rlist, 1)
 
 	r := rlist[0]
-	assert.Equal(t, "replicaset", r.GetKind())
-	assert.Equal(t, "test-replicaset", r.Metadata.Name)
+	assert.Equal(t, KIND_REPLICASET, r.GetKind())
+	assert.Equal(t, "test-replicaset", r.GetName())
 	assert.Equal(t, "kube-system", r.Metadata.Namespace)
 	assert.Len(t, r.Spec.Template.Spec.Containers, 1)
 
@@ -119,7 +127,7 @@ metadata:
 	assert.Len(t, nlist, 1)
 
 	n := nlist[0]
-	assert.Equal(t, "namespace", n.GetKind())
+	assert.Equal(t, KIND_NAMESPACE, n.GetKind())
 	assert.Equal(t, "kube-system", n.GetName())
 }
 
@@ -145,7 +153,7 @@ metadata:
 	assert.Len(t, nlist, 2)
 
 	n1 := nlist[0]
-	assert.Equal(t, "namespace", n1.GetKind())
+	assert.Equal(t, KIND_NAMESPACE, n1.GetKind())
 	assert.Equal(t, "kube-system", n1.GetName())
 
 	n2 := nlist[1]
@@ -179,13 +187,13 @@ metadata: {}
 
 	// check the first
 	n1 := nlist[0]
-	assert.Equal(t, "namespace", n1.GetKind())
-	assert.Equal(t, "default", n1.Metadata.Name)
+	assert.Equal(t, KIND_NAMESPACE, n1.GetKind())
+	assert.Equal(t, "default", n1.GetName())
 
 	// check the second
 	n2 := nlist[1]
-	assert.Equal(t, "namespace", n2.GetKind())
-	assert.Equal(t, "kube-system", n2.Metadata.Name)
+	assert.Equal(t, KIND_NAMESPACE, n2.GetKind())
+	assert.Equal(t, "kube-system", n2.GetName())
 }
 
 // ensure parse list with namespace items works as expected
@@ -225,16 +233,16 @@ metadata: {}
 
 	// check the first
 	d1 := dlist[0]
-	assert.Equal(t, "deployment", d1.GetKind())
+	assert.Equal(t, KIND_DEPLOYMENT, d1.GetKind())
+	assert.Equal(t, "test-deployment1", d1.GetName())
 	assert.Equal(t, "default", d1.Metadata.Namespace)
-	assert.Equal(t, "test-deployment1", d1.Metadata.Name)
 	assert.Len(t, d1.Spec.Template.Spec.Containers, 1)
 
 	// check the second
 	d2 := dlist[1]
-	assert.Equal(t, "deployment", d2.GetKind())
+	assert.Equal(t, KIND_DEPLOYMENT, d2.GetKind())
+	assert.Equal(t, "test-deployment2", d2.GetName())
 	assert.Equal(t, "kube-system", d2.Metadata.Namespace)
-	assert.Equal(t, "test-deployment2", d2.Metadata.Name)
 	assert.Len(t, d2.Spec.Template.Spec.Containers, 1)
 }
 
@@ -278,8 +286,8 @@ metadata: {}
 
 	// first
 	r := rlist[0]
-	assert.Equal(t, "replicaset", r.GetKind())
-	assert.Equal(t, "test-replicaset1", r.Metadata.Name)
+	assert.Equal(t, KIND_REPLICASET, r.GetKind())
+	assert.Equal(t, "test-replicaset1", r.GetName())
 	assert.Equal(t, "kube-system", r.Metadata.Namespace)
 	assert.Len(t, r.Spec.Template.Spec.Containers, 1)
 
@@ -288,11 +296,37 @@ metadata: {}
 
 	// second
 	r2 := rlist[1]
-	assert.Equal(t, "replicaset", r2.GetKind())
+	assert.Equal(t, KIND_REPLICASET, r2.GetKind())
 	assert.Equal(t, "test-replicaset2", r2.Metadata.Name)
 	assert.Equal(t, "default", r2.Metadata.Namespace)
 	assert.Len(t, r2.Spec.Template.Spec.Containers, 1)
 
 	container2 := r2.Spec.Template.Spec.Containers[0]
 	assert.Equal(t, "example.com/image:2", container2.Image)
+}
+
+// ensure local file parsing is supported
+func TestParseLocalFile_Deployment(t *testing.T) {
+	result, err := ParseLocalFile("./testdata/parser_test1.yml")
+	assert.Nil(t, err)
+	assert.Len(t, result, 1)
+
+	dlist := ToDeploymentList(result)
+	assert.Len(t, dlist, 1)
+
+	d := dlist[0]
+	assert.Equal(t, KIND_DEPLOYMENT, d.GetKind())
+	assert.Equal(t, "test-deployment", d.GetName())
+	assert.Equal(t, "default", d.Metadata.Namespace)
+	assert.Len(t, d.Spec.Template.Spec.Containers, 1)
+
+	container := d.Spec.Template.Spec.Containers[0]
+	assert.Equal(t, "example.com/image:1", container.Image)
+}
+
+// ensure local file with absent file will raise an error
+func TestParseLocalFile_DeploymentAbsentFile(t *testing.T) {
+	result, err := ParseLocalFile("./testdata/__not_exist__")
+	assert.Nil(t, result)
+	assert.Error(t, err)
 }

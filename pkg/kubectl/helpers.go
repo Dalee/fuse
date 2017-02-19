@@ -4,11 +4,7 @@ package kubectl
 func ToDeploymentList(list []KubeResourceInterface) []Deployment {
 	dlist := make([]Deployment, 0)
 	for _, item := range list {
-		d, ok := item.(*Deployment)
-		if !ok {
-			panic("Unable to typecase to ReplicaSet")
-		}
-
+		d, _ := item.(*Deployment)
 		dlist = append(dlist, *d)
 	}
 
@@ -19,11 +15,7 @@ func ToDeploymentList(list []KubeResourceInterface) []Deployment {
 func ToReplicaSetList(list []KubeResourceInterface) []ReplicaSet {
 	rlist := make([]ReplicaSet, 0)
 	for _, item := range list {
-		r, ok := item.(*ReplicaSet)
-		if !ok {
-			panic("Unable to typecase to ReplicaSet")
-		}
-
+		r, _ := item.(*ReplicaSet)
 		rlist = append(rlist, *r)
 	}
 
@@ -34,11 +26,7 @@ func ToReplicaSetList(list []KubeResourceInterface) []ReplicaSet {
 func ToNamespaceList(list []KubeResourceInterface) []Namespace {
 	nlist := make([]Namespace, 0)
 	for _, item := range list {
-		n, ok := item.(*Namespace)
-		if !ok {
-			panic("Unable to typecase to NameSpace")
-		}
-
+		n, _ := item.(*Namespace)
 		nlist = append(nlist, *n)
 	}
 

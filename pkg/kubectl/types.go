@@ -4,18 +4,28 @@ import (
 	"strings"
 )
 
+const (
+	KIND_DEPLOYMENT = "deployment"
+	KIND_REPLICASET = "replicaset"
+	KIND_NAMESPACE = "namespace"
+	KIND_POD = "pod"
+	KIND_LIST = "list"
+)
+
 type (
 	kubeTypeMetadata struct {
-		Name      string `yaml:"name"`
-		Namespace string `yaml:"namespace"`
+		Name       string `yaml:"name"`
+		Namespace  string `yaml:"namespace"`
+		Labels     map[string]string `yaml:"labels"`
+		Generation int `yaml:"generation"`
 	}
 
 	kubeTypeStatus struct {
-		AvailableReplicas   int `yaml:"availableReplicas"`   // status: total amount of available instances
-		ObservedGeneration  int `yaml:"observedGeneration"`  // status: current generation value
-		Replicas            int `yaml:"replicas"`            // status: requested amount of instances
-		UpdatedReplicas     int `yaml:"updatedReplicas"`     // status: up-to-date instances
-		UnavailableReplicas int `yaml:"unavailableReplicas"` // status: total amount of unavailable instances (missed after ok deploy)
+		AvailableReplicas   int `yaml:"availableReplicas"`   // total number of available instances
+		ObservedGeneration  int `yaml:"observedGeneration"`  // current generation value
+		Replicas            int `yaml:"replicas"`            // requested number of instances
+		UpdatedReplicas     int `yaml:"updatedReplicas"`     // up-to-date instances
+		UnavailableReplicas int `yaml:"unavailableReplicas"` // total number of unavailable instances
 	}
 
 	kubeContainerSpec struct {
@@ -66,6 +76,7 @@ type (
 	// KubeResourceInterface is common interface to all k8s resource types
 	KubeResourceInterface interface {
 		GetKind() string
+		//FilteredByKind(kind string) []KubeResourceInterface
 	}
 
 	// Deployment is k8s Deployment resource
@@ -99,6 +110,14 @@ func (k *kubeResource) GetKind() string {
 // interface support method
 func (d *kubeResourceList) GetKind() string {
 	return strings.ToLower(d.Kind)
+}
+
+func (d *kubeResourceList) GetItems() []KubeResourceInterface {
+	r := make([]KubeResourceInterface, 0)
+	for i := range d.Items {
+		r = append(r, &d.Items[i])
+	}
+	return r
 }
 
 // GetKind interface method support, returns string "deployment"

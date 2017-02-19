@@ -5,6 +5,8 @@ import (
 	"bytes"
 
 	"github.com/ghodss/yaml"
+	"io/ioutil"
+	"path/filepath"
 )
 
 type (
@@ -18,6 +20,21 @@ type (
 
 func newParser() kubeResourceParserInterface {
 	return &kubeResourceParser{}
+}
+
+// ParseLocalFile will allow to parse local file and fetch all resources defined there
+func ParseLocalFile(filename string) ([]KubeResourceInterface, error) {
+	filename, err := filepath.Abs(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	return newParser().parseYaml(data)
 }
 
 // parse whole kubectl answer into list of objects
@@ -62,53 +79,49 @@ func parseKubeResource(data []byte, resource KubeResourceInterface) ([]KubeResou
 	var object KubeResourceInterface
 
 	typeList := make([]KubeResourceInterface, 0)
-	switch resource.GetKind() {
 
-	case "list": // parse list is little bit tricky..
-		arrayObject := &kubeResourceList{}
-		if err = yaml.Unmarshal(data, arrayObject); err != nil {
+	// TODO: i think, i should need to refactor this..
+	switch resource.GetKind() {
+	case KIND_LIST: // parse list is little bit tricky..
+		listObject := &kubeResourceList{}
+		if err = yaml.Unmarshal(data, listObject); err != nil {
 			return nil, err
 		}
-
-		if len(arrayObject.Items) > 0 {
+		if len(listObject.Items) > 0 {
 			var list kubeResourceListInterface
 
-			switch arrayObject.Items[0].GetKind() {
-			case "namespace":
+			switch listObject.Items[0].GetKind() {
+			case KIND_NAMESPACE:
 				list = &namespaceList{}
 				break
 
-			case "deployment":
+			case KIND_DEPLOYMENT:
 				list = &deploymentList{}
 				break
 
-			case "replicaset":
+			case KIND_REPLICASET:
 				list = &replicaSetList{}
 				break
 			}
 
 			if list != nil {
-				if err = yaml.Unmarshal(data, list); err != nil {
-					return nil, err
-				}
-
+				yaml.Unmarshal(data, list)
 				for _, item := range list.GetItems() {
 					typeList = append(typeList, item)
 				}
 			}
 		}
-
 		break
 
-	case "deployment": // parse deployment
+	case KIND_DEPLOYMENT: // parse deployment
 		object = &Deployment{}
 		break
 
-	case "replicaset": // parse replicaset object
+	case KIND_REPLICASET: // parse replicaset object
 		object = &ReplicaSet{}
 		break
 
-	case "namespace": // parse namespace object
+	case KIND_NAMESPACE: // parse namespace object
 		object = &Namespace{}
 		break
 	}
