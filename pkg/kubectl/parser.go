@@ -11,7 +11,7 @@ import (
 
 type (
 	kubeResourceParserInterface interface {
-		parseYaml(data []byte) ([]KubeResourceInterface, error)
+		parseYaml(data []byte) (ResourceList, error)
 	}
 
 	kubeResourceParser struct {
@@ -23,13 +23,9 @@ func newParser() kubeResourceParserInterface {
 }
 
 // ParseLocalFile will allow to parse local file and fetch all resources defined there
-func ParseLocalFile(filename string) ([]KubeResourceInterface, error) {
-	filename, err := filepath.Abs(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := ioutil.ReadFile(filename)
+func ParseLocalFile(filename string) (ResourceList, error) {
+	file, _ := filepath.Abs(filename)
+	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
@@ -38,15 +34,15 @@ func ParseLocalFile(filename string) ([]KubeResourceInterface, error) {
 }
 
 // parse whole kubectl answer into list of objects
-func (p *kubeResourceParser) parseYaml(data []byte) ([]KubeResourceInterface, error) {
+func (p *kubeResourceParser) parseYaml(data []byte) (ResourceList, error) {
 	var err error
-	typeList := make([]KubeResourceInterface, 0)
-	maxBuffSize := 1024 * 1024 * 200 // 200MB
+	typeList := make(ResourceList, 0)
+	maxBufferSize := 1024 * 1024 * 200 // should be enough
 
 	breader := bytes.NewReader(data)
 	scanner := bufio.NewScanner(breader)
 
-	scanner.Buffer(data, maxBuffSize)
+	scanner.Buffer(data, maxBufferSize)
 	scanner.Split(splitYAMLDocument)
 
 	for scanner.Scan() {
@@ -65,7 +61,7 @@ func (p *kubeResourceParser) parseYaml(data []byte) ([]KubeResourceInterface, er
 		typeList = append(typeList, resourceList...)
 	}
 
-	// if document is tooo big
+	// if document is tooo big, even bigger than MaxBuffSize
 	if err := scanner.Err(); err != nil {
 		return nil, err
 	}
@@ -74,62 +70,71 @@ func (p *kubeResourceParser) parseYaml(data []byte) ([]KubeResourceInterface, er
 }
 
 // transform KubeResourceInterface/KubeResource into concrete class
-func parseKubeResource(data []byte, resource KubeResourceInterface) ([]KubeResourceInterface, error) {
+func parseKubeResource(data []byte, resource KubeResourceInterface) (ResourceList, error) {
 	var err error
 	var object KubeResourceInterface
 
-	typeList := make([]KubeResourceInterface, 0)
+	typeList := make(ResourceList, 0)
 
-	// TODO: i think, i should need to refactor this..
+	// TODO: i think, i should refactor this..
 	switch resource.GetKind() {
-	case KIND_LIST: // parse list is little bit tricky..
+	case KindList: // parse list is little bit tricky..
 		listObject := &kubeResourceList{}
-		if err = yaml.Unmarshal(data, listObject); err != nil {
-			return nil, err
-		}
+		yaml.Unmarshal(data, listObject)
+
+		// but, we know that list can't have mixed resource type
+		// packed in single list, so, check first item kind and create
+		// appropriate storage type
 		if len(listObject.Items) > 0 {
-			var list kubeResourceListInterface
+			var resourceList kubeResourceListInterface
 
 			switch listObject.Items[0].GetKind() {
-			case KIND_NAMESPACE:
-				list = &namespaceList{}
+
+			case KindPod:
+				resourceList = &podList{}
 				break
 
-			case KIND_DEPLOYMENT:
-				list = &deploymentList{}
+			case KindNamespace:
+				resourceList = &namespaceList{}
 				break
 
-			case KIND_REPLICASET:
-				list = &replicaSetList{}
+			case KindDeployment:
+				resourceList = &deploymentList{}
+				break
+
+			case KindReplicaSet:
+				resourceList = &replicaSetList{}
 				break
 			}
 
-			if list != nil {
-				yaml.Unmarshal(data, list)
-				for _, item := range list.GetItems() {
+			if resourceList != nil {
+				yaml.Unmarshal(data, resourceList)
+				for _, item := range resourceList.GetItems() {
 					typeList = append(typeList, item)
 				}
 			}
 		}
 		break
 
-	case KIND_DEPLOYMENT: // parse deployment
+	case KindPod:
+		object = &Pod{}
+		break
+
+	case KindDeployment: // parse deployment
 		object = &Deployment{}
 		break
 
-	case KIND_REPLICASET: // parse replicaset object
+	case KindReplicaSet: // parse replicaset object
 		object = &ReplicaSet{}
 		break
 
-	case KIND_NAMESPACE: // parse namespace object
+	case KindNamespace: // parse namespace object
 		object = &Namespace{}
 		break
 	}
 
 	if object != nil {
-		if err = yaml.Unmarshal(data, object); err != nil {
-			return nil, err
-		}
+		yaml.Unmarshal(data, object)
 		typeList = append(typeList, object)
 	}
 

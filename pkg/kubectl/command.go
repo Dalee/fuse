@@ -27,7 +27,7 @@ func newCommand(args []string) kubeCommandInterface {
 // More advanced wrapper which allows you to override binary to run
 func newCommandWithBinary(args []string, binary string) *kubeCommand {
 	argList := make([]string, 0)
-	if context := os.Getenv("CLUSTER_CONTEXT"); context != "" {
+	if context := os.Getenv(ClusterContextEnv); context != "" {
 		argList = append(argList, fmt.Sprintf("--context=%s", context))
 	}
 
@@ -39,7 +39,7 @@ func newCommandWithBinary(args []string, binary string) *kubeCommand {
 
 // Log command to stdout
 func (c *kubeCommand) Log() {
-	fmt.Printf("==> Executing: %s\n", strings.Join(c.getCommand().Args, " "))
+	fmt.Printf("===> Executing: %s\n", strings.Join(c.getCommand().Args, " "))
 }
 
 // Execute command and get stdout, stderr and exit_code as bool
