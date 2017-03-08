@@ -293,7 +293,7 @@ func (d *Deployment) IsReady() bool {
 	isReady = isReady && (d.Status.UpdatedReplicas >= d.Spec.Replicas)
 	isReady = isReady && (d.Status.UnavailableReplicas == 0)
 
-	if d.Spec.Replicas != 0 || d.Spec.Strategy.Type == strategyTypeRollingUpdate {
+	if (d.Spec.Replicas != 0) && (d.Spec.Strategy.Type == strategyTypeRollingUpdate) {
 		replicaMinRequired := d.Spec.Replicas - d.Spec.Strategy.RollingUpdate.MaxUnavailable
 		isReady = isReady && (d.Status.AvailableReplicas >= replicaMinRequired)
 	}
