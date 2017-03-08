@@ -52,12 +52,26 @@ func TestDeployment_Type(t *testing.T) {
 	d := Deployment{
 		Kind: "Deployment",
 		Metadata: resourceMetadata{
-			Name:      "test-deployment",
-			Namespace: "default",
-			UID:       "3eb259fc-bc6f-11e6-a342-005056ba5444",
+			Name:       "test-deployment",
+			Namespace:  "default",
+			UID:        "3eb259fc-bc6f-11e6-a342-005056ba5444",
+			Generation: 12,
 			Labels: map[string]string{
 				"sample-label1": "example1",
 			},
+		},
+		Spec: resourceSpec{
+			Replicas: 1,
+			Strategy: resourceStrategy{
+				Type: strategyTypeRollingUpdate,
+				RollingUpdate: resourceStrategyRolling{
+					MaxUnavailable: 0,
+				},
+			},
+		},
+		Status: resourceStatus{
+			UnavailableReplicas: 1,
+			ObservedGeneration:  0,
 		},
 	}
 
@@ -66,6 +80,8 @@ func TestDeployment_Type(t *testing.T) {
 	assert.Equal(t, "3eb259fc-bc6f-11e6-a342-005056ba5444", d.GetUUID())
 	assert.Equal(t, "default/test-deployment", d.GetKey())
 	assert.Equal(t, []string{"sample-label1=example1"}, d.GetSelector())
+	assert.False(t, d.IsReady())
+	assert.Equal(t, "Ready: false, Generation: meta=12 observed=0, Replicas: s=1, u=0, a=0, na=1", d.GetStatusString())
 
 	converted, err := d.ToDeployment()
 	assert.Nil(t, err)

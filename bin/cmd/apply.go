@@ -31,9 +31,9 @@ func init() {
 
 // Load and check configuration (yaml file), parse and return all
 // deployments defined in configuration file
-func load() (*[]kubectl.Deployment, error) {
+func initDeploy() (*[]kubectl.Deployment, error) {
 	if configurationYaml == "" {
-		return nil, errors.New("configuration parameter is absent")
+		return nil, errors.New("mandatory configuration parameter is not provided")
 	}
 
 	// parsing provided configuration
@@ -43,8 +43,7 @@ func load() (*[]kubectl.Deployment, error) {
 		return nil, err
 	}
 
-	// filtering only deployments
-	// if no deployments found it is an error
+	// filtering deployments, if no deployments found it's an error
 	newConfigurationList := fullResourceList.FilteredByKind(kubectl.KindDeployment).ToDeploymentList()
 	if len(newConfigurationList) == 0 {
 		return nil, errors.New("no Deployment resources found in configuration")
@@ -65,8 +64,8 @@ func load() (*[]kubectl.Deployment, error) {
 	return &newConfigurationList, nil
 }
 
-// Just apply configuration and display command output
-func apply(list *[]kubectl.Deployment) error {
+// Start deploy process / apply new configuration to cluster and display output
+func applyDeploy(list *[]kubectl.Deployment) error {
 	// printing extracted resources
 	fmt.Println("==> Deployments scheduled for update:")
 	for _, resource := range *list {
@@ -86,7 +85,7 @@ func apply(list *[]kubectl.Deployment) error {
 
 // Monitor configuration delivery, all unavailable replicas of each deployment
 // should be 0. Wait until timeout.
-func monitor(list *[]kubectl.Deployment) (bool, error) {
+func monitorDeploy(list *[]kubectl.Deployment) (bool, error) {
 	willExpireAt := time.Now().Add(clusterTimeout * time.Second)
 	fmt.Printf("==> Starting release delivery monitoring, timeout is %d seconds\n", clusterTimeout)
 
@@ -126,31 +125,8 @@ func monitor(list *[]kubectl.Deployment) (bool, error) {
 		// is every deployment successfully delivered?
 		isDelivered := true
 		for _, cfg := range updatedList {
-			key := cfg.GetKey()
-
-			observedGeneration := cfg.Status.ObservedGeneration
-			deploymentGeneration := cfg.Metadata.Generation
-			updatedReplicas := cfg.Status.UpdatedReplicas
-			availableReplicas := cfg.Status.AvailableReplicas
-			unavailableReplicas := cfg.Status.UnavailableReplicas
-
-			cfgNotReady := observedGeneration < deploymentGeneration
-			cfgNotReady = cfgNotReady && (updatedReplicas < cfg.Spec.Replicas)
-			cfgNotReady = cfgNotReady && (availableReplicas < cfg.Spec.Replicas)
-			cfgNotReady = cfgNotReady && (unavailableReplicas > 0)
-
-			fmt.Printf(
-				"===> Deployment: %s, generation: %d/%d, replicas: %d/%d/%d, waiting..\n",
-				key,
-				observedGeneration,
-				deploymentGeneration,
-				updatedReplicas,
-				availableReplicas,
-				unavailableReplicas,
-			)
-
-			// if it's not ready, disable loop exit
-			if cfgNotReady {
+			fmt.Printf("===> Deployment: %s, %s\n", cfg.GetKey(), cfg.GetStatusString())
+			if !cfg.IsReady() {
 				isDelivered = false
 			}
 		}
@@ -166,10 +142,10 @@ func monitor(list *[]kubectl.Deployment) (bool, error) {
 
 // Finalize delivery process, either do nothing or display logs for each pod of each deployment
 // in order to have information about broken delivery
-func finalize(list *[]kubectl.Deployment, isDeployed bool) error {
+func finalizeDeploy(list *[]kubectl.Deployment, isDeployed bool) error {
 
 	// if it's not deployed, display logs by deployment selector
-	fmt.Println("==> Fetching logs from pods...")
+	fmt.Println("==> Fetching logs of failed pods...")
 	for _, d := range *list {
 		// ok, get list of pods connected to deployment
 		resourceList, err := kubectl.CommandPodList(d.GetNamespace(), d.GetSelector()).RunAndParse()
@@ -197,8 +173,7 @@ func finalize(list *[]kubectl.Deployment, isDeployed bool) error {
 	}
 
 	// error registered, if deployment has > 1 replica sets, rollback it
-	fmt.Println("==> Deploy finished with errors...")
-	fmt.Println("==> Performing rollout undo...")
+	fmt.Println("==> Deploy finished with errors, undoing configuration changes...")
 	for _, d := range *list {
 		// get list of replica sets connected to deployment
 		resourceList, err := kubectl.CommandReplicaSetListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
@@ -213,11 +188,11 @@ func finalize(list *[]kubectl.Deployment, isDeployed bool) error {
 				return err
 			}
 
-			fmt.Printf("===> Deployment: %s - rolled back\n", d.GetKey())
+			fmt.Printf("===> Deployment: %s - rolled back to previous release\n", d.GetKey())
 			fmt.Println(string(stdout))
 
 		} else {
-			fmt.Printf("===> Deployment: %s - no rollback available", d.GetKey())
+			fmt.Printf("===> Deployment: %s - no rollback history available", d.GetKey())
 		}
 	}
 
@@ -231,22 +206,22 @@ func applyCmdHandler(cmd *cobra.Command, args []string) error {
 	var deployed bool
 
 	// load and parse configuration
-	if list, err = load(); err != nil {
+	if list, err = initDeploy(); err != nil {
 		return err
 	}
 
 	// apply configuration / start deploy
-	if err = apply(list); err != nil {
+	if err = applyDeploy(list); err != nil {
 		return err
 	}
 
 	// monitor deploy
-	if deployed, err = monitor(list); err != nil {
+	if deployed, err = monitorDeploy(list); err != nil {
 		return err
 	}
 
 	// finalize deploy
-	if err = finalize(list, deployed); err != nil {
+	if err = finalizeDeploy(list, deployed); err != nil {
 		return err
 	}
 

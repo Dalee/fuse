@@ -27,6 +27,9 @@ const (
 
 	// ClusterReleaseTimeoutEnv is the name of environment variable for apply command
 	ClusterReleaseTimeoutEnv = "CLUSTER_RELEASE_TIMEOUT"
+
+	// rolling update strategy type
+	strategyTypeRollingUpdate = "RollingUpdate"
 )
 
 type (
@@ -58,9 +61,20 @@ type (
 		Spec resourceContainerSpec `yaml:"spec"`
 	}
 
+	resourceStrategyRolling struct {
+		MaxSurge       int `yaml:"maxSurge"`
+		MaxUnavailable int `yaml:"maxUnavailable"`
+	}
+
+	resourceStrategy struct {
+		Type          string                  `yaml:"type"`
+		RollingUpdate resourceStrategyRolling `yaml:"rollingUpdate"`
+	}
+
 	resourceSpec struct {
 		Replicas int              `yaml:"replicas"`
 		Template resourceTemplate `yaml:"template"`
+		Strategy resourceStrategy `yaml:"strategy"`
 	}
 
 	kubeResourceList struct {
@@ -141,7 +155,7 @@ type (
 func (rl ResourceList) FilteredByKind(kind string) ResourceList {
 	result := make(ResourceList, 0)
 	for _, obj := range rl {
-		if strings.Compare(obj.GetKind(), kind) == 0 {
+		if obj.GetKind() == kind {
 			result = append(result, obj)
 		}
 	}
@@ -153,7 +167,7 @@ func (rl ResourceList) FilteredByKind(kind string) ResourceList {
 func (rl ResourceList) ToDeploymentList() []Deployment {
 	dlist := make([]Deployment, 0)
 	for _, obj := range rl {
-		if strings.Compare(obj.GetKind(), KindDeployment) == 0 {
+		if obj.GetKind() == KindDeployment {
 			d, _ := obj.(*Deployment)
 			dlist = append(dlist, *d)
 		}
@@ -166,7 +180,7 @@ func (rl ResourceList) ToDeploymentList() []Deployment {
 func (rl ResourceList) ToReplicaSetList() []ReplicaSet {
 	rlist := make([]ReplicaSet, 0)
 	for _, obj := range rl {
-		if strings.Compare(obj.GetKind(), KindReplicaSet) == 0 {
+		if obj.GetKind() == KindReplicaSet {
 			r, _ := obj.(*ReplicaSet)
 			rlist = append(rlist, *r)
 		}
@@ -179,7 +193,7 @@ func (rl ResourceList) ToReplicaSetList() []ReplicaSet {
 func (rl ResourceList) ToNamespaceList() []Namespace {
 	nlist := make([]Namespace, 0)
 	for _, obj := range rl {
-		if strings.Compare(obj.GetKind(), KindNamespace) == 0 {
+		if obj.GetKind() == KindNamespace {
 			n, _ := obj.(*Namespace)
 			nlist = append(nlist, *n)
 		}
@@ -192,7 +206,7 @@ func (rl ResourceList) ToNamespaceList() []Namespace {
 func (rl ResourceList) ToPodList() []Pod {
 	plist := make([]Pod, 0)
 	for _, obj := range rl {
-		if strings.Compare(obj.GetKind(), KindPod) == 0 {
+		if obj.GetKind() == KindPod {
 			p, _ := obj.(*Pod)
 			plist = append(plist, *p)
 		}
@@ -271,6 +285,34 @@ func (d *Deployment) GetSelector() []string {
 // ToDeployment interface method
 func (d *Deployment) ToDeployment() (*Deployment, error) {
 	return d, nil
+}
+
+// IsReady check k8s rules - https://kubernetes.io/docs/user-guide/deployments/#the-status-of-a-deployment
+func (d *Deployment) IsReady() bool {
+	isReady := d.Status.ObservedGeneration >= d.Metadata.Generation
+	isReady = isReady && (d.Status.UpdatedReplicas >= d.Spec.Replicas)
+	isReady = isReady && (d.Status.UnavailableReplicas == 0)
+
+	if d.Spec.Replicas != 0 || d.Spec.Strategy.Type == strategyTypeRollingUpdate {
+		replicaMinRequired := d.Spec.Replicas - d.Spec.Strategy.RollingUpdate.MaxUnavailable
+		isReady = isReady && (d.Status.AvailableReplicas >= replicaMinRequired)
+	}
+
+	return isReady
+}
+
+// GetStatusString return deployment status message
+func (d *Deployment) GetStatusString() string {
+	return fmt.Sprintf(
+		"Ready: %v, Generation: meta=%d observed=%d, Replicas: s=%d, u=%d, a=%d, na=%d",
+		d.IsReady(),
+		d.Metadata.Generation,
+		d.Status.ObservedGeneration,
+		d.Spec.Replicas,
+		d.Status.UpdatedReplicas,
+		d.Status.AvailableReplicas,
+		d.Status.UnavailableReplicas,
+	)
 }
 
 // GetItems is an interface support method

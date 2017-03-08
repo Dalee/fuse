@@ -35,29 +35,24 @@ func ParseLocalFile(filename string) (ResourceList, error) {
 
 // parse whole kubectl answer into list of objects
 func (p *kubeResourceParser) parseYaml(data []byte) (ResourceList, error) {
-	var err error
 	typeList := make(ResourceList, 0)
 	maxBufferSize := 1024 * 1024 * 200 // should be enough
 
-	breader := bytes.NewReader(data)
-	scanner := bufio.NewScanner(breader)
+	binaryReader := bytes.NewReader(data)
+	scanner := bufio.NewScanner(binaryReader)
 
 	scanner.Buffer(data, maxBufferSize)
 	scanner.Split(splitYAMLDocument)
 
 	for scanner.Scan() {
 		resource := &kubeResource{}
-
 		chunkData := scanner.Bytes()
+
 		if err := yaml.Unmarshal(chunkData, resource); err != nil {
 			return nil, err
 		}
 
-		resourceList, err := parseKubeResource(chunkData, resource)
-		if err != nil {
-			return nil, err
-		}
-
+		resourceList, _ := parseKubeResource(chunkData, resource)
 		typeList = append(typeList, resourceList...)
 	}
 
@@ -66,7 +61,7 @@ func (p *kubeResourceParser) parseYaml(data []byte) (ResourceList, error) {
 		return nil, err
 	}
 
-	return typeList, err
+	return typeList, nil
 }
 
 // transform KubeResourceInterface/KubeResource into concrete class

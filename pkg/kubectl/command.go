@@ -9,7 +9,6 @@ import (
 
 type (
 	kubeCommandInterface interface {
-		Log()
 		Run() ([]byte, bool)
 		getCommand() *exec.Cmd
 	}
@@ -37,13 +36,10 @@ func newCommandWithBinary(args []string, binary string) *kubeCommand {
 	}
 }
 
-// Log command to stdout
-func (c *kubeCommand) Log() {
-	fmt.Printf("===> Executing: %s\n", strings.Join(c.getCommand().Args, " "))
-}
-
 // Execute command and get stdout, stderr and exit_code as bool
 func (c *kubeCommand) Run() ([]byte, bool) {
+	fmt.Printf("===> %s\n", strings.Join(c.getCommand().Args, " ")) // TODO: should be moved to logging
+
 	result, err := c.getCommand().CombinedOutput()
 	if err != nil {
 		return []byte("Command failed to run"), false

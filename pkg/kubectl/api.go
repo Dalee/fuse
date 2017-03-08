@@ -16,8 +16,6 @@ type (
 
 // RunPlain run command and just return command output
 func (c *KubeCall) RunPlain() ([]byte, error) {
-	c.Cmd.Log()
-
 	output, success := c.Cmd.Run()
 	if success != true {
 		return output, errors.New(string(output))

@@ -20,7 +20,6 @@ type (
 	}
 )
 
-// implement interface for kubeCommandMock
 func (cm *kubeCommandMock) Log() {
 }
 
@@ -33,7 +32,6 @@ func (cm *kubeCommandMock) getCommand() *exec.Cmd {
 	return nil
 }
 
-// implement interface for kubeParserMock
 func (pm *kubeParserMock) parseYaml(data []byte) (ResourceList, error) {
 	var parsedResource ResourceList
 	args := pm.Called()
@@ -60,7 +58,6 @@ func TestKubeCall_RunPlain(t *testing.T) {
 	assert.Equal(t, []byte("Hello world"), output)
 }
 
-//
 func TestKubeCall_RunNormal(t *testing.T) {
 	cmdMock := new(kubeCommandMock)
 	cmdMock.On("Run").Return([]byte(""), true)
@@ -78,7 +75,6 @@ func TestKubeCall_RunNormal(t *testing.T) {
 	assert.Len(t, items, 0)
 }
 
-//
 func TestKubeCall_RunAndParseFirst(t *testing.T) {
 	cmdMock := new(kubeCommandMock)
 	cmdMock.On("Run").Return([]byte(""), true)
@@ -102,7 +98,40 @@ func TestKubeCall_RunAndParseFirst(t *testing.T) {
 	assert.Equal(t, "namespace", item.GetKind())
 }
 
-//
+func TestKubeCall_RunAndParseFirstEmpty(t *testing.T) {
+	cmdMock := new(kubeCommandMock)
+	cmdMock.On("Run").Return([]byte(""), true)
+
+	parserMock := new(kubeParserMock)
+	parserMock.On("parseYaml").Return(make(ResourceList, 0), nil)
+
+	call := &KubeCall{
+		Cmd:    cmdMock,
+		Parser: parserMock,
+	}
+
+	item, err := call.RunAndParseFirst()
+	assert.Nil(t, err)
+	assert.Nil(t, item)
+}
+
+func TestKubeCall_RunAndParseFirstError(t *testing.T) {
+	cmdMock := new(kubeCommandMock)
+	cmdMock.On("Run").Return([]byte(""), true)
+
+	parserMock := new(kubeParserMock)
+	parserMock.On("parseYaml").Return(nil, errors.New("Parser is not available"))
+
+	call := &KubeCall{
+		Cmd:    cmdMock,
+		Parser: parserMock,
+	}
+
+	item, err := call.RunAndParseFirst()
+	assert.Error(t, err)
+	assert.Nil(t, item)
+}
+
 func TestKubeCall_RunCommandFailed(t *testing.T) {
 	cmdMock := new(kubeCommandMock)
 	cmdMock.On("Run").Return([]byte(""), false)
@@ -137,7 +166,6 @@ func TestKubeCall_RunParserFailed(t *testing.T) {
 	assert.Nil(t, items)
 }
 
-// apply configuration
 func TestCommandApply(t *testing.T) {
 	cmd := CommandApply("test.yaml")
 
@@ -145,7 +173,6 @@ func TestCommandApply(t *testing.T) {
 	assert.Equal(t, "kubectl apply -f test.yaml -o name", args)
 }
 
-// rollback resource
 func TestCommandRollback(t *testing.T) {
 	cmd := CommandRollback("default", "deployment", "example-deployment")
 
@@ -153,7 +180,6 @@ func TestCommandRollback(t *testing.T) {
 	assert.Equal(t, "kubectl --namespace=default rollout undo deployment/example-deployment", args)
 }
 
-// get namespace list
 func TestCommandNamespaceList(t *testing.T) {
 	cmd := CommandNamespaceList()
 
@@ -161,7 +187,6 @@ func TestCommandNamespaceList(t *testing.T) {
 	assert.Equal(t, "kubectl get namespaces -o yaml", args)
 }
 
-// get replicaset list
 func TestCommandReplicaSetList(t *testing.T) {
 	os.Setenv(ClusterContextEnv, "prod")
 	cmd := CommandReplicaSetList("kube-system")
@@ -178,7 +203,6 @@ func TestCommandReplicaSetBySelector(t *testing.T) {
 	assert.Equal(t, "kubectl --namespace=kube-system get replicasets --selector=app=example-app -o yaml", args)
 }
 
-// get replicaset list with default namespace
 func TestCommandReplicaSetListWithDefaultNamespace(t *testing.T) {
 	cmd := CommandReplicaSetList("")
 
@@ -186,7 +210,6 @@ func TestCommandReplicaSetListWithDefaultNamespace(t *testing.T) {
 	assert.Equal(t, "kubectl --namespace=default get replicasets -o yaml", args)
 }
 
-// get deployment data
 func TestCommandDescribeDeployment(t *testing.T) {
 	cmd := CommandDeploymentInfo("sample-namespace", "example")
 
@@ -194,7 +217,6 @@ func TestCommandDescribeDeployment(t *testing.T) {
 	assert.Equal(t, "kubectl --namespace=sample-namespace get deployment/example -o yaml", args)
 }
 
-// get deployments in namespace
 func TestCommandDeploymentList(t *testing.T) {
 	cmd := CommandDeploymentList("kube-system")
 
@@ -202,7 +224,6 @@ func TestCommandDeploymentList(t *testing.T) {
 	assert.Equal(t, "kubectl --namespace=kube-system get deployments -o yaml", args)
 }
 
-// get deployments in namespace
 func TestCommandDeploymentListWithDefaultNamespace(t *testing.T) {
 	cmd := CommandDeploymentList("")
 
@@ -210,7 +231,6 @@ func TestCommandDeploymentListWithDefaultNamespace(t *testing.T) {
 	assert.Equal(t, "kubectl --namespace=default get deployments -o yaml", args)
 }
 
-// test get pod list by selector
 func TestCommandPodList(t *testing.T) {
 	cmd := CommandPodList("", []string{"app=prod-v1", "name=example"})
 
@@ -218,7 +238,6 @@ func TestCommandPodList(t *testing.T) {
 	assert.Equal(t, "kubectl --namespace=default get pods --selector=app=prod-v1,name=example -o yaml", args)
 }
 
-// test get logs from pods
 func TestCommandPodLogs(t *testing.T) {
 	cmd := CommandPodLogs("", "pod-123456")
 

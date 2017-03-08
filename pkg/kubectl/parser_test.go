@@ -297,6 +297,7 @@ items:
         - image: example.com/image:2
 kind: List
 metadata: {}
+---
 `
 	p := newParser()
 	result, err := p.parseYaml([]byte(rawYamlString))
