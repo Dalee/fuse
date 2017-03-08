@@ -57,7 +57,6 @@ func TestDeployment_Type(t *testing.T) {
 			UID:       "3eb259fc-bc6f-11e6-a342-005056ba5444",
 			Labels: map[string]string{
 				"sample-label1": "example1",
-				"sample-label2": "example2",
 			},
 		},
 	}
@@ -66,7 +65,7 @@ func TestDeployment_Type(t *testing.T) {
 	assert.Equal(t, "test-deployment", d.GetName())
 	assert.Equal(t, "3eb259fc-bc6f-11e6-a342-005056ba5444", d.GetUUID())
 	assert.Equal(t, "default/test-deployment", d.GetKey())
-	assert.Equal(t, []string{"sample-label1=example1", "sample-label2=example2"}, d.GetSelector())
+	assert.Equal(t, []string{"sample-label1=example1"}, d.GetSelector())
 
 	converted, err := d.ToDeployment()
 	assert.Nil(t, err)
