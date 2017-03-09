@@ -242,5 +242,5 @@ func TestCommandPodLogs(t *testing.T) {
 	cmd := CommandPodLogs("", "pod-123456")
 
 	args := strings.Join(cmd.Cmd.getCommand().Args, " ")
-	assert.Equal(t, "kubectl --namespace=default logs pod-123456", args)
+	assert.Equal(t, "kubectl --namespace=default logs --tail=100 pod-123456", args)
 }

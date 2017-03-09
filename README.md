@@ -15,11 +15,10 @@ Key features:
 
 Environment variables:
  * `CLUSTER_CONTEXT` cluster context to use (default, no context)
- * `CLUSTER_RELEASE_TIMEOUT` timeout before release will be marked as failed (default, 120 seconds)
 
 Flags:
  * Cluster context variable can be overridden via global flag: `-c` or `--context`
- * Cluster release timeout can be overridden via `-t` or `--release-timeout` for `apply` command
+ * Cluster rollout timeout can be set via `-t` or `--release-timeout` for `apply` command
  * For a `garbage-collect` command, cluster namespace can be changed via `-n, --namespace`, default is `"default"`.
 
 ## Apply
@@ -40,8 +39,8 @@ Usage:
   fuse apply [flags]
 
 Flags:
-  -f, --configuration string   Release configuration yaml file, mandatory
-  -t, --release-timeout int    Deploy timeout in seconds, override CLUSTER_RELEASE_TIMEOUT environment
+  -f, --configuration string       Rollout configuration spec file (yaml), mandatory
+  -t, --rollout-timeout duration   Rollout timeout (default 2m0s)
 
 Global Flags:
   -c, --context string   Override CLUSTER_CONTEXT defined in environment (default "")
@@ -57,6 +56,48 @@ Global Flags:
   * if timeout reached: 
     * fuse will display logs from pods attached to each deployment
     * for each deployment `rollout undo` will be executed, but only if deployment undo history is present
+    
+### Sample output
+
+```
+[14:31:04][Step 4/5] Starting: /data/tc-agent/temp/agentTmp/custom_script427977640370952504
+[14:31:04][Step 4/5] in directory: /data/tc-agent/work/fa28ed608c5de3ce
+[14:31:04][Step 4/5] ===> kubectl apply -f kubernetes.yml -o name
+[14:31:04][Step 4/5] service/example-staging
+[14:31:04][Step 4/5] deployment/example-staging
+[14:31:04][Step 4/5] 
+[14:31:04][Step 4/5] ==> Starting rollout monitoring, timeout is 2m0s seconds
+[14:31:09][Step 4/5] ===> kubectl --namespace=default get deployment/example-staging -o yaml
+[14:31:09][Step 4/5] ===> Deployment: default/example-staging, Ready: false, Generation: meta=84 observed=84, Replicas: s=1, u=1, a=1, na=1
+[14:31:14][Step 4/5] ===> kubectl --namespace=default get deployment/example-staging -o yaml
+[14:31:15][Step 4/5] ===> Deployment: default/example-staging, Ready: true, Generation: meta=84 observed=84, Replicas: s=1, u=1, a=1, na=0
+[14:31:15][Step 4/5] ==> Rollout done!
+[14:31:15][Step 4/5] ==> Fetching logs...
+[14:31:15][Step 4/5] ===> kubectl --namespace=default get deployment/example-staging -o yaml
+[14:31:15][Step 4/5] ===> kubectl --namespace=default get pods --selector=app=example-staging -o yaml
+[14:31:15][Step 4/5] ===> kubectl --namespace=default logs --tail=100 example-staging-1567981747-4awvj
+[14:31:15][Step 4/5] ===> Deployment: default/example-staging, Pod: default/example-staging-1567981747-4awvj:
+[14:31:15][Step 4/5] *** Running /etc/my_init.d/00_regen_ssh_host_keys.sh...
+[14:31:15][Step 4/5] *** Running /etc/rc.local...
+[14:31:15][Step 4/5] *** Booting runit daemon...
+[14:31:15][Step 4/5] *** Runit started as PID 14
+[14:31:15][Step 4/5] 2017/03/09 14:31:05 [notice] 23#23: using the "epoll" event method
+[14:31:15][Step 4/5] 2017/03/09 14:31:05 [notice] 23#23: nginx/1.11.10
+[14:31:15][Step 4/5] 2017/03/09 14:31:05 [notice] 23#23: built by gcc 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.2) 
+[14:31:15][Step 4/5] 2017/03/09 14:31:05 [notice] 23#23: OS: Linux 3.10.0-327.22.2.el7.x86_64
+[14:31:15][Step 4/5] 2017/03/09 14:31:05 [notice] 23#23: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+[14:31:15][Step 4/5] 2017/03/09 14:31:05 [notice] 23#23: start worker processes
+[14:31:15][Step 4/5] 2017/03/09 14:31:05 [notice] 23#23: start worker process 35
+[14:31:15][Step 4/5] [Mar 9 14:31:06.712] info: server started: http://example-staging-1567981747-4awvj:3000
+[14:31:15][Step 4/5] [Mar 9 14:31:06.722] info: Redis connected
+[14:31:15][Step 4/5] [Mar 9 14:31:06.733] info: Redis ready
+[14:31:15][Step 4/5] [Mar 9 14:31:10.197] debug: HEAD http://127.0.0.1:3000/healthcheck
+[14:31:15][Step 4/5] [Mar 9 14:31:10.225] debug: HEAD http://127.0.0.1:3000/healthcheck
+[14:31:15][Step 4/5] [Mar 9 14:31:15.206] debug: HEAD http://127.0.0.1:3000/healthcheck
+[14:31:15][Step 4/5] [Mar 9 14:31:15.219] debug: HEAD http://127.0.0.1:3000/healthcheck
+[14:31:15][Step 4/5] 
+[14:31:15][Step 4/5] Process exited with code 0
+```
 
 ## Garbage Collect
 
@@ -97,6 +138,22 @@ Global Flags:
 
 > Do not forget to schedule [Registry garbage-collect](https://docs.docker.com/registry/garbage-collection/) command
 to perform actual cleanup of deleted images!
+
+### Sample output
+
+```
+[14:37:38][Step 2/5] Starting: /data/tc-agent/temp/agentTmp/custom_script5182791551931646628
+[14:37:38][Step 2/5] in directory: /data/tc-agent/work/2d12da58bb93314d
+[14:37:38][Step 2/5] ==> Fetching repository info...
+[14:37:38][Step 2/5] ===> kubectl --namespace=default get replicasets -o yaml
+[14:37:41][Step 2/5] ==> Found 1 repositories
+[14:37:41][Step 2/5] ===> Repository: acme/example-staging
+[14:37:41][Step 2/5] ===> Deployed tags: [45 40 41 42 43 44]
+[14:37:41][Step 2/5] ===> Garbage tags: [34 35 36 37 38 39]
+[14:37:41][Step 2/5] ==> Clean up
+[14:37:41][Step 2/5] ===> Clearing up repository: acme/example-staging
+[14:37:42][Step 2/5] Process exited with code 0
+```
 
 ## Stability
 

@@ -197,6 +197,7 @@ func CommandPodLogs(namespace, name string) *KubeCall {
 	c := newCommand([]string{
 		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
 		"logs",
+		"--tail=100",
 		name,
 	})
 

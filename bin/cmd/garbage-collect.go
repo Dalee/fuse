@@ -82,6 +82,9 @@ func printGarbage(garbageInfo *reference.GarbageDetectInfo) error {
 func deleteGarbage(garbageInfo *reference.GarbageDetectInfo) error {
 	fmt.Println("==> Clean up")
 	for _, item := range garbageInfo.Items {
+		if len(item.GarbageDigestList) == 0 {
+			continue
+		}
 
 		fmt.Printf("===> Clearing up repository: %s\n", item.Repository)
 		for _, digest := range item.GarbageDigestList {
