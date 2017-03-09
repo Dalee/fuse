@@ -158,3 +158,59 @@ func TestResourceList_FilteredByKind(t *testing.T) {
 	assert.Len(t, items, 1)
 	assert.Equal(t, KindDeployment, items[0].GetKind())
 }
+
+func TestDeployment_IsReady(t *testing.T) {
+	// initial deployment, apply command issued
+	d := Deployment{
+		Kind: "Deployment",
+		Metadata: resourceMetadata{
+			Name:       "test-deployment",
+			Namespace:  "default",
+			Generation: 12,
+		},
+		Spec: resourceSpec{
+			Replicas: 1,
+			Strategy: resourceStrategy{
+				Type: strategyTypeRollingUpdate,
+				RollingUpdate: resourceStrategyRolling{
+					MaxUnavailable: 0,
+				},
+			},
+		},
+		Status: resourceStatus{
+			UpdatedReplicas:     0,
+			AvailableReplicas:   0,
+			UnavailableReplicas: 0,
+			ObservedGeneration:  11,
+		},
+	}
+
+	// initial check
+	assert.False(t, d.IsReady())
+	assert.Equal(t, "Ready: false, Generation: meta=12 observed=11, Replicas: s=1, u=0, a=0, na=0", d.GetStatusString())
+
+	// 1) k8s started rollout
+	d.Status.ObservedGeneration = 12
+	d.Status.UpdatedReplicas = 0
+	d.Status.AvailableReplicas = 0
+	d.Status.UnavailableReplicas = 1
+	assert.False(t, d.IsReady())
+	assert.Equal(t, "Ready: false, Generation: meta=12 observed=12, Replicas: s=1, u=0, a=0, na=1", d.GetStatusString())
+
+	// 2) k8s changed updated replica count
+	d.Status.UpdatedReplicas = 1
+	assert.False(t, d.IsReady())
+	assert.Equal(t, "Ready: false, Generation: meta=12 observed=12, Replicas: s=1, u=1, a=0, na=1", d.GetStatusString())
+
+	// 3) k8s changed available replica count
+	d.Status.AvailableReplicas = 1
+	assert.False(t, d.IsReady())
+	assert.Equal(t, "Ready: false, Generation: meta=12 observed=12, Replicas: s=1, u=1, a=1, na=1", d.GetStatusString())
+
+	// 4) finally, k8s changed unavailable replica count
+	d.Status.UnavailableReplicas = 0
+	assert.True(t, d.IsReady())
+	assert.Equal(t, "Ready: true, Generation: meta=12 observed=12, Replicas: s=1, u=1, a=1, na=0", d.GetStatusString())
+
+	// 5) rollout done..
+}

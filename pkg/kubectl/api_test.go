@@ -232,7 +232,7 @@ func TestCommandDeploymentListWithDefaultNamespace(t *testing.T) {
 }
 
 func TestCommandPodList(t *testing.T) {
-	cmd := CommandPodList("", []string{"app=prod-v1", "name=example"})
+	cmd := CommandPodListBySelector("", []string{"app=prod-v1", "name=example"})
 
 	args := strings.Join(cmd.Cmd.getCommand().Args, " ")
 	assert.Equal(t, "kubectl --namespace=default get pods --selector=app=prod-v1,name=example -o yaml", args)
@@ -242,5 +242,5 @@ func TestCommandPodLogs(t *testing.T) {
 	cmd := CommandPodLogs("", "pod-123456")
 
 	args := strings.Join(cmd.Cmd.getCommand().Args, " ")
-	assert.Equal(t, "kubectl --namespace=default logs pod-123456", args)
+	assert.Equal(t, "kubectl --namespace=default logs --tail=100 pod-123456", args)
 }

@@ -1,4 +1,4 @@
 /vendor
 /fuse
-/coverage.out
+/coverage.txt
 .coverprofile

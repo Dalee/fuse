@@ -25,8 +25,8 @@ const (
 	// ClusterContextEnv is the name of environment variable to get kubectl requested context
 	ClusterContextEnv = "CLUSTER_CONTEXT"
 
-	// ClusterReleaseTimeoutEnv is the name of environment variable for apply command
-	ClusterReleaseTimeoutEnv = "CLUSTER_RELEASE_TIMEOUT"
+	// ClusterRolloutTimeoutEnv is the name of environment variable for apply command
+	ClusterRolloutTimeoutEnv = "CLUSTER_ROLLOUT_TIMEOUT"
 
 	// rolling update strategy type
 	strategyTypeRollingUpdate = "RollingUpdate"
