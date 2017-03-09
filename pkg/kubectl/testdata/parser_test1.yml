@@ -1,0 +1,10 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: test-deployment
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+      - image: example.com/image:1
