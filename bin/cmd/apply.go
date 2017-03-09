@@ -53,12 +53,12 @@ func initDeploy() (*[]kubectl.Deployment, error) {
 	clusterTimeout = time.Second * 120 // default is 2m
 	if clusterTimeoutFlag == 0 {
 		clusterTimeoutEnv := os.Getenv(kubectl.ClusterReleaseTimeoutEnv)
-		if parsed, err := strconv.Atoi(clusterTimeoutEnv); err == nil && parsed > 0 {
-			clusterTimeout = time.Second * parsed
+		if timeoutEnv, err := strconv.Atoi(clusterTimeoutEnv); err == nil && timeoutEnv > 0 {
+			clusterTimeout = time.Duration(timeoutEnv) * time.Second
 		}
 	}
 	if clusterTimeoutFlag > 0 {
-		clusterTimeout = time.Second * clusterTimeoutFlag
+		clusterTimeout = time.Duration(clusterTimeoutFlag) * time.Second
 	}
 
 	return &newConfigurationList, nil
@@ -107,7 +107,7 @@ func monitorDeploy(list *[]kubectl.Deployment) (bool, error) {
 				continue
 			}
 
-			updatedList = append(updatedList, deployment)
+			updatedList = append(updatedList, *deployment)
 		}
 
 		// check timeout
@@ -117,7 +117,7 @@ func monitorDeploy(list *[]kubectl.Deployment) (bool, error) {
 		}
 
 		// do we get all deployment info back from cluster?
-		if len(list) != len(updatedList) {
+		if len(*list) != len(updatedList) {
 			fmt.Println("===> Not all deployments registered in cluster, waiting...")
 			continue
 		}

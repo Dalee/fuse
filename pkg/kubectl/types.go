@@ -287,7 +287,8 @@ func (d *Deployment) ToDeployment() (*Deployment, error) {
 	return d, nil
 }
 
-// IsReady check k8s rules - https://kubernetes.io/docs/user-guide/deployments/#the-status-of-a-deployment
+// IsReady check deploy has been rolled out
+// @see https://kubernetes.io/docs/user-guide/deployments/#the-status-of-a-deployment
 func (d *Deployment) IsReady() bool {
 	isReady := d.Status.ObservedGeneration >= d.Metadata.Generation
 	isReady = isReady && (d.Status.UpdatedReplicas >= d.Spec.Replicas)
