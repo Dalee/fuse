@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	// command itself
 	garbageCollectCmd = &cobra.Command{
 		Use:   "garbage-collect",
 		Short: "Remove tags from registry not registered within Kubernetes ReplicaSet",
@@ -20,28 +21,29 @@ var (
 		RunE:  garbageCollectCmdHandler,
 	}
 
-	// flags
-	dryRun        = false
-	ignoreMissing = false
-	registryURL   = ""
-	namespace     = ""
+	// Flags
+	dryRunFlag        = false
+	ignoreMissingFlag = false
+	registryURLFlag   = ""
+	namespaceFlag     = ""
 
-	// registry client
-	registryClient *registry.Registry
+	// Docker Distribution client
+	hitmanClient *registry.Registry
 )
 
+// register all flags
 func init() {
-	garbageCollectCmd.Flags().StringVarP(&namespace, "namespace", "n", "default", "Kubernetes namespace to use")
-	garbageCollectCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Do not execute destructive actions (default \"false\")")
-	garbageCollectCmd.Flags().StringVarP(&registryURL, "registry-url", "r", "", "Registry URL (e.g. \"https://registry.example.com:5000/\")")
-	garbageCollectCmd.Flags().BoolVarP(&ignoreMissing, "ignore-missing", "i", false, "Skip missing images in Registry (default \"false\")")
+	garbageCollectCmd.Flags().StringVarP(&namespaceFlag, "namespace", "n", "default", "Kubernetes namespace to use")
+	garbageCollectCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "d", false, "Do not execute destructive actions (default \"false\")")
+	garbageCollectCmd.Flags().StringVarP(&registryURLFlag, "registry-url", "r", "", "Registry URL (e.g. \"https://registry.example.com:5000/\")")
+	garbageCollectCmd.Flags().BoolVarP(&ignoreMissingFlag, "ignore-missing", "i", false, "Skip missing images in Registry (default \"false\")")
 	RootCmd.AddCommand(garbageCollectCmd)
 }
 
 // get garbage from docker distribution, list of repositories from kubernetes replica sets
 func getGarbage() (*reference.GarbageDetectInfo, error) {
 	fmt.Println("==> Fetching repository info...")
-	resourceList, err := kubectl.CommandReplicaSetList(namespace).RunAndParse()
+	resourceList, err := kubectl.CommandReplicaSetList(namespaceFlag).RunAndParse()
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +59,7 @@ func getGarbage() (*reference.GarbageDetectInfo, error) {
 	}
 
 	// perform detection
-	garbageInfo, err := reference.DetectGarbage(cnList, registryClient, ignoreMissing)
+	garbageInfo, err := reference.DetectGarbage(cnList, hitmanClient, ignoreMissingFlag)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +86,7 @@ func deleteGarbage(garbageInfo *reference.GarbageDetectInfo) error {
 		fmt.Printf("===> Clearing up repository: %s\n", item.Repository)
 		for _, digest := range item.GarbageDigestList {
 
-			err := registryClient.DeleteImageDigest(item.Repository, digest)
+			err := hitmanClient.DeleteImageDigest(item.Repository, digest)
 			if err != nil {
 				return err
 			}
@@ -101,13 +103,13 @@ func garbageCollectCmdHandler(cmd *cobra.Command, args []string) error {
 	var err error
 
 	// build registry
-	if registryURL == "" {
+	if registryURLFlag == "" {
 		return errors.New("registry-url is a mandatory parameter")
 	}
 
-	registryClient = registry.New(registryURL)
-	if registryClient.IsValidURL() == false {
-		return fmt.Errorf("Request to %s/v2/ failed, is URL pointed to Docker Registry?", registryURL)
+	hitmanClient = registry.New(registryURLFlag)
+	if hitmanClient.IsValidURL() == false {
+		return fmt.Errorf("Request to %s/v2/ failed, is URL pointed to Docker Registry?", registryURLFlag)
 	}
 
 	// detect garbage
@@ -123,7 +125,7 @@ func garbageCollectCmdHandler(cmd *cobra.Command, args []string) error {
 	}
 
 	// clearing up if not dry-run
-	if dryRun == false {
+	if dryRunFlag == false {
 		err = deleteGarbage(garbageInfo)
 		if err != nil {
 			return err

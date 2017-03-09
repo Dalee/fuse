@@ -139,12 +139,12 @@ func CommandReplicaSetListBySelector(namespace string, selector []string) *KubeC
 }
 
 // CommandDeploymentInfo get information about single deployment
-func CommandDeploymentInfo(namespace string, deployment string) *KubeCall {
+func CommandDeploymentInfo(namespace string, name string) *KubeCall {
 	p := newParser()
 	c := newCommand([]string{
 		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
 		"get",
-		fmt.Sprintf("deployment/%s", deployment),
+		fmt.Sprintf("deployment/%s", name),
 		"-o",
 		"yaml",
 	})
@@ -172,8 +172,8 @@ func CommandDeploymentList(namespace string) *KubeCall {
 	}
 }
 
-// CommandPodList return list of pods in namespace with selector
-func CommandPodList(namespace string, selector []string) *KubeCall {
+// CommandPodListBySelector return list of pods in namespace with selector
+func CommandPodListBySelector(namespace string, selector []string) *KubeCall {
 	selectorList := strings.Join(selector, ",")
 	p := newParser()
 	c := newCommand([]string{
@@ -192,12 +192,12 @@ func CommandPodList(namespace string, selector []string) *KubeCall {
 }
 
 // CommandPodLogs return logs for pod
-func CommandPodLogs(namespace, pod string) *KubeCall {
+func CommandPodLogs(namespace, name string) *KubeCall {
 	p := newParser()
 	c := newCommand([]string{
 		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
 		"logs",
-		pod,
+		name,
 	})
 
 	return &KubeCall{

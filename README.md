@@ -144,4 +144,4 @@ Test and Coverage
  * `make test` — linting and testing
  * `make coverage` — display coverage information
  * `make format` — gofmt sources
- * `make coverage && go tool cover -html=coverage.out` — see coverage
+ * `make coverage && go tool cover -html=coverage.txt` — see coverage

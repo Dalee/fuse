@@ -31,7 +31,7 @@ func init() {
 
 // Load and check configuration (yaml file), parse and return all
 // deployments defined in configuration file
-func initDeploy() (*[]kubectl.Deployment, error) {
+func initRollOut() (*[]kubectl.Deployment, error) {
 	if configurationYaml == "" {
 		return nil, errors.New("mandatory configuration parameter is not provided")
 	}
@@ -65,131 +65,131 @@ func initDeploy() (*[]kubectl.Deployment, error) {
 }
 
 // Start deploy process / apply new configuration to cluster and display output
-func applyDeploy(list *[]kubectl.Deployment) error {
-	// printing extracted resources
+func applyRollOut(specList *[]kubectl.Deployment) error {
 	fmt.Println("==> Deployments scheduled for update:")
-	for _, resource := range *list {
-		fmt.Printf("===> Deployment: %s/%s\n", resource.GetKind(), resource.GetName())
+	for _, resource := range *specList {
+		fmt.Printf("===> %s\n", resource.GetKey())
 	}
 
 	fmt.Println("==> Applying configuration...")
 	stdout, err := kubectl.CommandApply(configurationYaml).RunPlain()
+
+	fmt.Println("==> Cluster apply response:")
+	fmt.Println(string(stdout)) // in case of error, display output
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("==> Cluster apply response:")
-	fmt.Println(string(stdout))
 	return nil
 }
 
 // Monitor configuration delivery, all unavailable replicas of each deployment
 // should be 0. Wait until timeout.
-func monitorDeploy(list *[]kubectl.Deployment) (bool, error) {
+func monitorRollOut(specList *[]kubectl.Deployment) (bool, error) {
 	willExpireAt := time.Now().Add(clusterTimeout * time.Second)
-	fmt.Printf("==> Starting release delivery monitoring, timeout is %d seconds\n", clusterTimeout)
+	fmt.Printf("==> Starting rollout monitoring, timeout is %d seconds\n", clusterTimeout)
 
 	for {
 		// make initial delay..
 		time.Sleep(5 * time.Second)
-		updatedList := make([]kubectl.Deployment, 0)
+		rolledList := make([]kubectl.Deployment, 0)
 
-		// collect cluster configuration
-		for _, cfg := range *list {
-			cmd := kubectl.CommandDeploymentInfo(cfg.GetNamespace(), cfg.GetName())
-			resource, _ := cmd.RunAndParseFirst()
-			if resource == nil {
+		// fetch updated deployment configuration
+		for _, spec := range *specList {
+			r, _ := kubectl.CommandDeploymentInfo(spec.GetNamespace(), spec.GetName()).RunAndParseFirst()
+			if r == nil {
 				continue
 			}
 
-			deployment, _ := resource.ToDeployment()
-			if deployment == nil {
+			d, _ := r.ToDeployment()
+			if d == nil {
 				continue
 			}
 
-			updatedList = append(updatedList, *deployment)
+			rolledList = append(rolledList, *d)
 		}
 
-		// check timeout
+		// 1) timeout reached?
 		if time.Now().After(willExpireAt) {
-			fmt.Println("===> Timeout reached, aborting deploy...")
+			fmt.Println("===> Timeout reached, aborting rollout...")
 			break
 		}
 
-		// do we get all deployment info back from cluster?
-		if len(*list) != len(updatedList) {
-			fmt.Println("===> Not all deployments registered in cluster, waiting...")
+		// 2) every deployment defined in spec registered in cluster?
+		if len(*specList) != len(rolledList) {
+			fmt.Printf("===> Waiting for deployment registration, %d to go...\n", len(*specList)-len(rolledList))
 			continue
 		}
 
-		// is every deployment successfully delivered?
-		isDelivered := true
-		for _, cfg := range updatedList {
-			fmt.Printf("===> Deployment: %s, %s\n", cfg.GetKey(), cfg.GetStatusString())
-			if !cfg.IsReady() {
-				isDelivered = false
+		// 3) every deployment is rolled out?
+		isRolledOut := true
+		for _, d := range rolledList {
+			fmt.Printf("===> %s, %s\n", d.GetKey(), d.GetStatusString())
+			if !d.IsReady() {
+				isRolledOut = false
 			}
 		}
 
-		// is every deployment delivered?
-		if isDelivered {
+		// 4) if rolled out, stop..
+		if isRolledOut {
 			return true, nil
 		}
 	}
 
+	// timeout reached, aborting...
 	return false, nil
 }
 
 // Finalize delivery process, either do nothing or display logs for each pod of each deployment
 // in order to have information about broken delivery
-func finalizeDeploy(list *[]kubectl.Deployment, isDeployed bool) error {
+func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
 
-	// if it's not deployed, display logs by deployment selector
-	fmt.Println("==> Fetching logs of failed pods...")
-	for _, d := range *list {
-		// ok, get list of pods connected to deployment
-		resourceList, err := kubectl.CommandPodList(d.GetNamespace(), d.GetSelector()).RunAndParse()
+	// display logs for each pod attached to deployment list
+	fmt.Println("==> Fetching logs...")
+	for _, d := range *specList {
+		// get list of pods connected to deployment
+		rlist, err := kubectl.CommandPodListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
 		if err != nil {
 			return err
 		}
 
-		// display logs from each pod
-		podList := resourceList.FilteredByKind(kubectl.KindPod).ToPodList()
-		for _, pod := range podList {
+		// display logs for each pod
+		plist := rlist.FilteredByKind(kubectl.KindPod).ToPodList()
+		for _, pod := range plist {
 			stdout, err := kubectl.CommandPodLogs(pod.GetNamespace(), pod.GetName()).RunPlain()
+			fmt.Printf("===> Deployment: %s, Pod: %s:\n", d.GetKey(), pod.GetKey())
+			fmt.Println(string(stdout))
+
 			if err != nil {
 				return err
 			}
-
-			fmt.Printf("===> Deployment: %s, Pod: %s - Logs:\n", d.GetKey(), pod.GetKey())
-			fmt.Println(string(stdout))
 		}
 	}
 
 	// if deploy successful do nothing..
-	if isDeployed {
-		fmt.Println("==> Deploy finished successfully")
+	if isRolledOut {
+		fmt.Println("==> Rollout finished successfully")
 		return nil
 	}
 
 	// error registered, if deployment has > 1 replica sets, rollback it
-	fmt.Println("==> Deploy finished with errors, undoing configuration changes...")
-	for _, d := range *list {
+	fmt.Println("==> Rollout failed, starting undo process...")
+	for _, d := range *specList {
 		// get list of replica sets connected to deployment
-		resourceList, err := kubectl.CommandReplicaSetListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
+		rlist, err := kubectl.CommandReplicaSetListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
 		if err != nil {
 			return err
 		}
 
-		// if more than one, we able to perform "rollout undo"
-		if len(resourceList) > 1 {
+		// if deployment has previous configuration - perform "rollout undo"
+		// otherwise - do nothing...
+		if len(rlist) > 1 {
 			stdout, err := kubectl.CommandRollback(d.GetNamespace(), d.GetKind(), d.GetName()).RunPlain()
+			fmt.Printf("===> Deployment: %s - rolled back to previous release\n", d.GetKey())
+			fmt.Println(string(stdout))
 			if err != nil {
 				return err
 			}
-
-			fmt.Printf("===> Deployment: %s - rolled back to previous release\n", d.GetKey())
-			fmt.Println(string(stdout))
 
 		} else {
 			fmt.Printf("===> Deployment: %s - no rollback history available", d.GetKey())
@@ -201,32 +201,32 @@ func finalizeDeploy(list *[]kubectl.Deployment, isDeployed bool) error {
 
 // command handler
 func applyCmdHandler(cmd *cobra.Command, args []string) error {
-	var list *[]kubectl.Deployment
+	var specList *[]kubectl.Deployment
 	var err error
-	var deployed bool
+	var isRolledOut bool
 
-	// load and parse configuration
-	if list, err = initDeploy(); err != nil {
+	// load and parse configuration spec
+	if specList, err = initRollOut(); err != nil {
 		return err
 	}
 
-	// apply configuration / start deploy
-	if err = applyDeploy(list); err != nil {
+	// apply configuration / start rollout
+	if err = applyRollOut(specList); err != nil {
 		return err
 	}
 
-	// monitor deploy
-	if deployed, err = monitorDeploy(list); err != nil {
+	// monitor rollout
+	if isRolledOut, err = monitorRollOut(specList); err != nil {
 		return err
 	}
 
 	// finalize deploy
-	if err = finalizeDeploy(list, deployed); err != nil {
+	if err = finalizeRollOut(specList, isRolledOut); err != nil {
 		return err
 	}
 
 	// signalize to CI/CD about final status
-	if deployed {
+	if isRolledOut {
 		os.Exit(0)
 	} else {
 		os.Exit(1)

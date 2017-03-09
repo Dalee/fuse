@@ -13,16 +13,17 @@ var (
 		Short: "Kubernetes deploy and maintenance tool",
 		Long:  `Kubernetes deploy and maintenance tool, great for CI/CD environments`,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			if context != "" {
-				os.Setenv(kubectl.ClusterContextEnv, context)
+			// override ClusterContextEnv with provided flag
+			if contextFlag != "" {
+				os.Setenv(kubectl.ClusterContextEnv, contextFlag)
 			}
 		},
 	}
 
 	// global flag for current cluster context
-	context = ""
+	contextFlag = ""
 )
 
 func init() {
-	RootCmd.PersistentFlags().StringVarP(&context, "context", "c", "", "Override CLUSTER_CONTEXT defined in environment (default \"\")")
+	RootCmd.PersistentFlags().StringVarP(&contextFlag, "context", "c", "", "Override CLUSTER_CONTEXT defined in environment (default \"\")")
 }

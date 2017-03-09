@@ -14,7 +14,8 @@ install:
   - glide install
 
 script:
+  - make build-linux
   - make coverage
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash) -f ./coverage.out
+  - bash <(curl -s https://codecov.io/bash) -f ./coverage.txt
