@@ -151,9 +151,9 @@ func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
 
 	for _, d := range *rolledList {
 		// get list of pods connected to deployment
-		rlist, err := kubectl.CommandPodListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
-		if err != nil {
-			return err
+		rlist, _ := kubectl.CommandPodListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
+		if rlist == nil {
+			continue
 		}
 
 		// display logs for each pod
