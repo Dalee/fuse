@@ -95,7 +95,7 @@ func applyRollOut(specList *[]kubectl.Deployment) error {
 // Monitor configuration delivery, all unavailable replicas of each deployment
 // should be 0. Wait until timeout.
 func monitorRollOut(specList *[]kubectl.Deployment) (bool, error) {
-	fmt.Printf("==> Starting rollout monitoring, timeout is %v seconds\n", clusterTimeout)
+	fmt.Printf("==> Starting rollout monitoring, rollout timeout: %v\n", clusterTimeout)
 	willExpireAt := time.Now().Add(clusterTimeout)
 
 	for {
@@ -141,6 +141,8 @@ func monitorRollOut(specList *[]kubectl.Deployment) (bool, error) {
 // Finalize delivery process, either do nothing or display logs for each pod of each deployment
 // in order to have information about broken delivery
 func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
+	// make small delay
+	time.Sleep(5 * time.Second)
 
 	// display logs for each pod attached to deployment list
 	fmt.Println("==> Fetching logs...")
