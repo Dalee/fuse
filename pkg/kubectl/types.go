@@ -22,11 +22,11 @@ const (
 	// KindList name of List resource type
 	KindList = "list"
 
+	// PodStatusRunning string representation of running pod
+	PodStatusRunning = "Running"
+
 	// ClusterContextEnv is the name of environment variable to get kubectl requested context
 	ClusterContextEnv = "CLUSTER_CONTEXT"
-
-	// ClusterRolloutTimeoutEnv is the name of environment variable for apply command
-	ClusterRolloutTimeoutEnv = "CLUSTER_ROLLOUT_TIMEOUT"
 
 	// rolling update strategy type
 	strategyTypeRollingUpdate = "RollingUpdate"
@@ -42,11 +42,12 @@ type (
 	}
 
 	resourceStatus struct {
-		AvailableReplicas   int `yaml:"availableReplicas"`   // total number of available instances
-		ObservedGeneration  int `yaml:"observedGeneration"`  // current generation value
-		Replicas            int `yaml:"replicas"`            // requested number of instances
-		UpdatedReplicas     int `yaml:"updatedReplicas"`     // up-to-date instances
-		UnavailableReplicas int `yaml:"unavailableReplicas"` // total number of unavailable instances
+		AvailableReplicas   int    `yaml:"availableReplicas"`   // total number of available instances
+		ObservedGeneration  int    `yaml:"observedGeneration"`  // current generation value
+		Replicas            int    `yaml:"replicas"`            // requested number of instances
+		UpdatedReplicas     int    `yaml:"updatedReplicas"`     // up-to-date instances
+		UnavailableReplicas int    `yaml:"unavailableReplicas"` // total number of unavailable instances
+		Phase               string `yaml:"phase"`               // pod status
 	}
 
 	resourceContainer struct {

@@ -161,22 +161,27 @@ func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
 		// display logs for each pod
 		plist := rlist.FilteredByKind(kubectl.KindPod).ToPodList()
 		for _, pod := range plist {
+			if pod.Status.Phase != kubectl.PodStatusRunning {
+				continue
+			}
+
 			stdout, err := kubectl.CommandPodLogs(pod.GetNamespace(), pod.GetName()).RunPlain()
 			fmt.Printf("===> Deployment: %s, Pod: %s:\n", d.GetKey(), pod.GetKey())
 			fmt.Println(string(stdout))
-
 			if err != nil {
 				return err
 			}
+
 		}
 	}
 
 	// if deploy successful do nothing..
 	if isRolledOut {
+		fmt.Println("==> Done.")
 		return nil
 	}
 
-	// error registered, if deployment has > 1 replica sets, rollback it
+	// error registered, if deployment has > 1 replica sets, roll it back to previous revision
 	fmt.Println("==> Rollout failed, starting undo process...")
 	for _, d := range *rolledList {
 		// get list of replica sets connected to deployment
@@ -196,7 +201,7 @@ func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
 			}
 
 		} else {
-			fmt.Printf("===> Deployment: %s - no rollback history available", d.GetKey())
+			fmt.Printf("===> Deployment: %s - no rollback history available\n", d.GetKey())
 		}
 	}
 

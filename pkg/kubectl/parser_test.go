@@ -211,6 +211,8 @@ items:
   metadata:
     name: example-2-pod
     namespace: default
+  status:
+    phase: Running
 kind: List
 metadata: {}
 `
@@ -231,6 +233,7 @@ metadata: {}
 	p2 := plist[1]
 	assert.Equal(t, KindPod, p2.GetKind())
 	assert.Equal(t, "example-2-pod", p2.GetName())
+	assert.Equal(t, PodStatusRunning, p2.Status.Phase)
 }
 
 func TestParsePod(t *testing.T) {
