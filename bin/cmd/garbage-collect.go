@@ -26,6 +26,7 @@ var (
 	ignoreMissingFlag = false
 	registryURLFlag   = ""
 	namespaceFlag     = ""
+	ignoreTags        = make([]string, 0)
 
 	// Docker Distribution client
 	hitmanClient *registry.Registry
@@ -37,6 +38,7 @@ func init() {
 	garbageCollectCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "d", false, "Do not execute destructive actions (default \"false\")")
 	garbageCollectCmd.Flags().StringVarP(&registryURLFlag, "registry-url", "r", "", "Registry URL (e.g. \"https://registry.example.com:5000/\")")
 	garbageCollectCmd.Flags().BoolVarP(&ignoreMissingFlag, "ignore-missing", "i", false, "Skip missing images in Registry (default \"false\")")
+	garbageCollectCmd.Flags().StringSliceVarP(&ignoreTags, "ignore-tags", "t", []string{}, "Skip tags")
 	RootCmd.AddCommand(garbageCollectCmd)
 }
 
@@ -59,7 +61,7 @@ func getGarbage() (*reference.GarbageDetectInfo, error) {
 	}
 
 	// perform detection
-	garbageInfo, err := reference.DetectGarbage(cnList, hitmanClient, ignoreMissingFlag)
+	garbageInfo, err := reference.DetectGarbage(cnList, ignoreTags, hitmanClient, ignoreMissingFlag)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +74,8 @@ func printGarbage(garbageInfo *reference.GarbageDetectInfo) error {
 	fmt.Printf("==> Found %d repositories\n", len(garbageInfo.Items))
 	for _, item := range garbageInfo.Items {
 		fmt.Printf("===> Repository: %s\n", item.Repository)
-		fmt.Printf("===> Deployed tags: %v\n", item.DeployedTagList)
-		fmt.Printf("===> Garbage tags: %v\n", item.GarbageTagList)
+		fmt.Printf("=====> Deployed tags: %v\n", item.DeployedTagList)
+		fmt.Printf("=====> Garbage tags: %v\n", item.GarbageTagList)
 	}
 	return nil
 }
