@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/Dalee/fuse.svg?branch=master)](https://travis-ci.org/Dalee/fuse)
 [![Coverage](https://codecov.io/gh/Dalee/fuse/branch/master/graph/badge.svg)](https://codecov.io/gh/Dalee/fuse)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Dalee/fuse)](https://goreportcard.com/report/github.com/Dalee/fuse)
+[![codebeat badge](https://codebeat.co/badges/acdf46b7-8265-42b6-96a4-c770969250ef)](https://codebeat.co/projects/github-com-dalee-fuse-master)
 
 Simple, but powerful tool, build around `kubectl` command, great for CI/CD environments.
 
