@@ -14,14 +14,14 @@ Key features:
 ## Configuration
 
 Environment variables:
- * `CLUSTER_CONTEXT` cluster context to use (default, no context)
+ * `CLUSTER_CONTEXT` cluster context to use (default, no context, so `kubectl` will use default)
 
 Flags:
  * Cluster context variable can be overridden via global flag: `-c` or `--context`
  * Cluster rollout timeout can be set via `-t` or `--release-timeout` for `apply` command
  * For a `garbage-collect` command, cluster namespace can be changed via `-n, --namespace`, default is `"default"`.
 
-## Apply
+## Kubernetes Rollout
 
 Apply new configuration to Kubernetes cluster and monitor release delivery.
 
@@ -99,9 +99,11 @@ Global Flags:
 [14:31:15][Step 4/5] Process exited with code 0
 ```
 
-## Garbage Collect
+## Registry Garbage Collection
 
-Remove tags from registry not registered within any Kubernetes ReplicaSet
+> Docker Registry access and manipulation is based on our another project [Hitman](https://github.com/Dalee/hitman).
+
+Remove tags from registry not registered within any Kubernetes ReplicaSet.
 
 Usage:
 ```
@@ -119,12 +121,17 @@ Usage:
 Flags:
   -d, --dry-run               Do not execute destructive actions (default "false")
   -i, --ignore-missing        Skip missing images in Registry (default "false")
+  -k, --keep-tag stringSlice  Keep tag in Registry, even if it not deployed (default none)
   -n, --namespace string      Kubernetes namespace to use (default "default")
   -r, --registry-url string   Registry URL (e.g. "https://registry.example.com:5000/")
 
 Global Flags:
   -c, --context string   Override CLUSTER_CONTEXT defined in environment (default "")
 ```
+
+> `-k/--keep-tag` can be provided multiple times, best use case is keep `latest` tag
+in order to speed up build image time.
+
 
 ### What `garbage-collect` command do?
 
@@ -148,10 +155,11 @@ to perform actual cleanup of deleted images!
 [14:37:38][Step 2/5] ===> kubectl --namespace=default get replicasets -o yaml
 [14:37:41][Step 2/5] ==> Found 1 repositories
 [14:37:41][Step 2/5] ===> Repository: acme/example-staging
-[14:37:41][Step 2/5] ===> Deployed tags: [45 40 41 42 43 44]
-[14:37:41][Step 2/5] ===> Garbage tags: [34 35 36 37 38 39]
-[14:37:41][Step 2/5] ==> Clean up
-[14:37:41][Step 2/5] ===> Clearing up repository: acme/example-staging
+[14:37:41][Step 2/5] ===> Deployed: [45 40 41 42 43 44]
+[14:37:41][Step 2/5] ===> Detected as garbage: [34 35 36 37 38 39]
+[14:37:41][Step 2/5]
+[14:37:41][Step 2/5] ==> Clearing up...
+[14:37:41][Step 2/5] ===> Done: acme/example-staging
 [14:37:42][Step 2/5] Process exited with code 0
 ```
 
@@ -197,8 +205,14 @@ Install project dependencies:
 $ glide install
 ```
 
-Test and Coverage
+Test and Coverage:
  * `make test` — linting and testing
  * `make coverage` — display coverage information
  * `make format` — gofmt sources
  * `make coverage && go tool cover -html=coverage.txt` — see coverage
+
+
+## Useful links, Further reading
+
+* [Kubernetes official site](https://kubernetes.io/)
+* [Official way to deploy applications (helm)](https://github.com/kubernetes/helm)

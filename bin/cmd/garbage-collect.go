@@ -38,7 +38,7 @@ func init() {
 	garbageCollectCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "d", false, "Do not execute destructive actions (default \"false\")")
 	garbageCollectCmd.Flags().StringVarP(&registryURLFlag, "registry-url", "r", "", "Registry URL (e.g. \"https://registry.example.com:5000/\")")
 	garbageCollectCmd.Flags().BoolVarP(&ignoreMissingFlag, "ignore-missing", "i", false, "Skip missing images in Registry (default \"false\")")
-	garbageCollectCmd.Flags().StringSliceVarP(&ignoreTags, "ignore-tags", "t", []string{}, "Skip tags")
+	garbageCollectCmd.Flags().StringSliceVarP(&ignoreTags, "keep-tag", "k", []string{}, "Keep tag in Registry, even if it not deployed (default none)")
 	RootCmd.AddCommand(garbageCollectCmd)
 }
 
@@ -74,21 +74,20 @@ func printGarbage(garbageInfo *reference.GarbageDetectInfo) error {
 	fmt.Printf("==> Found %d repositories\n", len(garbageInfo.Items))
 	for _, item := range garbageInfo.Items {
 		fmt.Printf("===> Repository: %s\n", item.Repository)
-		fmt.Printf("=====> Deployed tags: %v\n", item.DeployedTagList)
-		fmt.Printf("=====> Garbage tags: %v\n", item.GarbageTagList)
+		fmt.Printf("=====> Deployed: %v\n", item.DeployedTagList)
+		fmt.Printf("=====> Detected as garbage: %v\n\n", item.GarbageTagList)
 	}
 	return nil
 }
 
 // delete garbage from docker distribution
 func deleteGarbage(garbageInfo *reference.GarbageDetectInfo) error {
-	fmt.Println("==> Clean up")
+	fmt.Println("==> Clearing up...")
 	for _, item := range garbageInfo.Items {
 		if len(item.GarbageDigestList) == 0 {
 			continue
 		}
 
-		fmt.Printf("===> Clearing up repository: %s\n", item.Repository)
 		for _, digest := range item.GarbageDigestList {
 
 			err := hitmanClient.DeleteImageDigest(item.Repository, digest)
@@ -96,6 +95,7 @@ func deleteGarbage(garbageInfo *reference.GarbageDetectInfo) error {
 				return err
 			}
 
+			fmt.Printf("===> Done: %s\n", item.Repository)
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
