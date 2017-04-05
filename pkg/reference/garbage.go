@@ -63,7 +63,7 @@ func SliceHasItemsInSlice(src, dst []string) bool {
 }
 
 // DetectGarbage will detect garbage for a given set of deployed image references
-func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing bool) (*GarbageDetectInfo, error) {
+func DetectGarbage(k8sImageList []string, skipTags []string, api registryInterface, ignoreMissing bool) (*GarbageDetectInfo, error) {
 	// remove duplicated entries
 	RemoveDuplicates(&k8sImageList)
 
@@ -139,6 +139,10 @@ func DetectGarbage(k8sImageList []string, api registryInterface, ignoreMissing b
 		}
 
 		for _, digest := range imageDigestList {
+			if SliceHasItemsInSlice(digest.TagList, skipTags) {
+				continue
+			}
+
 			if SliceHasItemsInSlice(deployedTagList, digest.TagList) == false {
 				detectItem.GarbageDigestList =
 					append(detectItem.GarbageDigestList, digest.Name)

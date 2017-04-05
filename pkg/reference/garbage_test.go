@@ -101,7 +101,7 @@ func TestDetectGarbage_NormalCase(t *testing.T) {
 		"example.com:5000/sample/repo2:v27",
 	}
 
-	garbageInfo, err := DetectGarbage(deployedList, registryMock, false)
+	garbageInfo, err := DetectGarbage(deployedList, []string{}, registryMock, false)
 	assert.Nil(t, err)
 
 	assert.Len(t, garbageInfo.Items, 2)
@@ -119,6 +119,43 @@ func TestDetectGarbage_NormalCase(t *testing.T) {
 	assert.Equal(t, []string{"v28", "latest"}, garbageItem2.GarbageTagList)
 }
 
+func TestDetectGarbage_SkipTags(t *testing.T) {
+	registryList1 := new(registry.RepositoryDigestList)
+	registryList1.Children = append(registryList1.Children, &registry.RepositoryDigest{
+		Name:    "sha256:sample-repo1-randomdigestnumber-1",
+		Path:    "sample/repo1",
+		TagList: []string{"3"},
+	})
+	registryList1.Children = append(registryList1.Children, &registry.RepositoryDigest{
+		Name:    "sha256:sample-repo1-randomdigestnumber-2",
+		Path:    "sample/repo1",
+		TagList: []string{"4"},
+	})
+	// this one is wrong and should be deleted
+	registryList1.Children = append(registryList1.Children, &registry.RepositoryDigest{
+		Name:    "sha256:sample-repo1-randomdigestnumber-3",
+		Path:    "sample/repo1",
+		TagList: []string{"5", "latest"},
+	})
+
+	registryMock := new(RegistryInterfaceMock)
+	registryMock.On("GetImageDigestList", "sample/repo1").Return(registryList1, nil)
+
+	deployedList := []string{
+		"example.com:5000/sample/repo1:3",
+		"example.com:5000/sample/repo1:4",
+	}
+
+	// check
+	garbageInfo, err := DetectGarbage(deployedList, []string{"latest"}, registryMock, false)
+	assert.Nil(t, err)
+	assert.Len(t, garbageInfo.Items, 1)
+
+	garbageItem := garbageInfo.Items[0]
+	assert.Equal(t, []string{"3", "4"}, garbageItem.DeployedTagList)
+	assert.Equal(t, []string(nil), garbageItem.GarbageTagList)
+}
+
 //
 func TestDetectGarbage_RegistryCallFailed(t *testing.T) {
 	deployedList := []string{
@@ -129,7 +166,7 @@ func TestDetectGarbage_RegistryCallFailed(t *testing.T) {
 	registryMock.On("GetImageDigestList", "sample/repo").Return(nil, errors.New("Call failed"))
 
 	//
-	garbageInfo, err := DetectGarbage(deployedList, registryMock, false)
+	garbageInfo, err := DetectGarbage(deployedList, []string{}, registryMock, false)
 	assert.Error(t, err)
 	assert.Nil(t, garbageInfo)
 }
@@ -144,7 +181,7 @@ func TestDetectGarbage_RegistryCallFailedNoError(t *testing.T) {
 	registryMock.On("GetImageDigestList", "sample/repo").Return(nil, errors.New("Call failed"))
 
 	//
-	garbageInfo, err := DetectGarbage(deployedList, registryMock, true)
+	garbageInfo, err := DetectGarbage(deployedList, []string{}, registryMock, true)
 	assert.Nil(t, err)
 	assert.Len(t, garbageInfo.Items, 1)
 
@@ -171,7 +208,7 @@ func TestDetectGarbage_ImageNotFoundError(t *testing.T) {
 	registryMock.On("GetImageDigestList", "sample/unknown-repo").Return(registryList, nil)
 
 	//
-	garbageInfo, err := DetectGarbage(deployedList, registryMock, false)
+	garbageInfo, err := DetectGarbage(deployedList, []string{}, registryMock, false)
 	assert.Error(t, err)
 	assert.Nil(t, garbageInfo)
 }
@@ -193,7 +230,7 @@ func TestDetectGarbage_ImageNotFoundSkipMissing(t *testing.T) {
 	registryMock.On("GetImageDigestList", "sample/unknown-repo").Return(registryList, nil)
 
 	//
-	garbageInfo, err := DetectGarbage(deployedList, registryMock, true)
+	garbageInfo, err := DetectGarbage(deployedList, []string{}, registryMock, true)
 	assert.Nil(t, err)
 	assert.Len(t, garbageInfo.Items, 1)
 
@@ -211,7 +248,7 @@ func TestDetectGarbage_InvalidRefSpecPassed(t *testing.T) {
 	registryMock := new(RegistryInterfaceMock)
 	registryMock.On("GetImageDigestList", "sample/unknown-repo").Return(nil, errors.New("Shouldn't be there"))
 
-	garbageInfo, err := DetectGarbage(deployedList, registryMock, true)
+	garbageInfo, err := DetectGarbage(deployedList, []string{}, registryMock, true)
 	assert.Nil(t, garbageInfo)
 	assert.Error(t, err)
 	assert.Equal(t, "Invalid repository format", err.Error())
