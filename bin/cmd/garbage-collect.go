@@ -95,7 +95,7 @@ func deleteGarbage(garbageInfo *reference.GarbageDetectInfo) error {
 				return err
 			}
 
-			fmt.Printf("===> Done: %s\n", item.Repository)
+			fmt.Printf("===> Done: %s:%s\n", item.Repository, digest)
 			time.Sleep(100 * time.Millisecond)
 		}
 	}
