@@ -52,14 +52,20 @@ type (
 
 	resourceContainer struct {
 		Image string `yaml:"image"` // example.com:80/dalee/image:34
+		Name  string `yaml:"name"`
 	}
 
 	resourceContainerSpec struct {
 		Containers []resourceContainer `yaml:"containers"`
 	}
 
+	resourceMetadataSpec struct {
+		Labels map[string]string `yaml:"labels"`
+	}
+
 	resourceTemplate struct {
-		Spec resourceContainerSpec `yaml:"spec"`
+		Metadata resourceMetadataSpec  `yaml:"metadata"`
+		Spec     resourceContainerSpec `yaml:"spec"`
 	}
 
 	resourceStrategyRolling struct {
@@ -277,6 +283,16 @@ func (d *Deployment) GetGeneration() int {
 func (d *Deployment) GetSelector() []string {
 	selectorList := make([]string, 0)
 	for key, value := range d.Metadata.Labels {
+		selectorList = append(selectorList, fmt.Sprintf("%s=%s", key, value))
+	}
+
+	return selectorList
+}
+
+// GetPodSelector return slice of selectors associated with Deployment Spec template
+func (d *Deployment) GetPodSelector() []string {
+	selectorList := make([]string, 0)
+	for key, value := range d.Spec.Template.Metadata.Labels {
 		selectorList = append(selectorList, fmt.Sprintf("%s=%s", key, value))
 	}
 

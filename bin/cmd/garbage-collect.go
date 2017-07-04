@@ -25,7 +25,6 @@ var (
 	dryRunFlag        = false
 	ignoreMissingFlag = false
 	registryURLFlag   = ""
-	namespaceFlag     = ""
 	ignoreTags        = make([]string, 0)
 
 	// Docker Distribution client
@@ -34,8 +33,7 @@ var (
 
 // register all flags
 func init() {
-	garbageCollectCmd.Flags().StringVarP(&namespaceFlag, "namespace", "n", "default", "Kubernetes namespace to use")
-	garbageCollectCmd.Flags().BoolVarP(&dryRunFlag, "dry-run", "d", false, "Do not execute destructive actions (default \"false\")")
+	garbageCollectCmd.Flags().BoolVar(&dryRunFlag, "dry-run", false, "Do not execute destructive actions (default \"false\")")
 	garbageCollectCmd.Flags().StringVarP(&registryURLFlag, "registry-url", "r", "", "Registry URL (e.g. \"https://registry.example.com:5000/\")")
 	garbageCollectCmd.Flags().BoolVarP(&ignoreMissingFlag, "ignore-missing", "i", false, "Skip missing images in Registry (default \"false\")")
 	garbageCollectCmd.Flags().StringSliceVarP(&ignoreTags, "keep-tag", "k", []string{}, "Keep tag in Registry, even if it not deployed (default none)")

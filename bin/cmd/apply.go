@@ -32,7 +32,7 @@ func init() {
 	applyCmd.MarkFlagRequired("configuration")
 	applyCmd.MarkFlagFilename("configuration", "yml", "yaml")
 
-	applyCmd.Flags().DurationVarP(&clusterTimeout, "rollout-timeout", "t", 2*time.Minute, "Rollout timeout")
+	applyCmd.Flags().DurationVarP(&clusterTimeout, "rollout-timeout", "t", 3*time.Minute, "Rollout timeout")
 	RootCmd.AddCommand(applyCmd)
 }
 
@@ -153,7 +153,7 @@ func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
 
 	for _, d := range *rolledList {
 		// get list of pods connected to deployment
-		rlist, _ := kubectl.CommandPodListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
+		rlist, _ := kubectl.CommandPodListBySelector(d.GetNamespace(), d.GetPodSelector()).RunAndParse()
 		if rlist == nil {
 			continue
 		}
@@ -185,7 +185,7 @@ func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
 	fmt.Println("==> Rollout failed, starting undo process...")
 	for _, d := range *rolledList {
 		// get list of replica sets connected to deployment
-		rlist, err := kubectl.CommandReplicaSetListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
+		rlist, err := kubectl.CommandReplicaSetListBySelector(d.GetNamespace(), d.GetPodSelector()).RunAndParse()
 		if err != nil {
 			return err
 		}

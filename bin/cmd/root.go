@@ -21,9 +21,11 @@ var (
 	}
 
 	// global flag for current cluster context
-	contextFlag = ""
+	contextFlag   = ""
+	namespaceFlag = ""
 )
 
 func init() {
 	RootCmd.PersistentFlags().StringVarP(&contextFlag, "context", "c", "", "Override CLUSTER_CONTEXT defined in environment (default \"\")")
+	execCmd.PersistentFlags().StringVarP(&namespaceFlag, "namespace", "n", "default", "Kubernetes namespace to use")
 }

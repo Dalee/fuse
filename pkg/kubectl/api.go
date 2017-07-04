@@ -86,6 +86,23 @@ func CommandRollback(namespace, kind, name string) *KubeCall {
 	}
 }
 
+// CommandExec execute command in container of pod
+func CommandExec(namespace, pod, container, command string) *KubeCall {
+	p := newParser()
+	c := newCommand([]string{
+		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
+		"exec",
+		fmt.Sprintf("%s", pod),
+		fmt.Sprintf("--container=%s", container),
+		command,
+	})
+
+	return &KubeCall{
+		Cmd:    c,
+		Parser: p,
+	}
+}
+
 // CommandNamespaceList return call which will return list of namespaces registered in kubernetes cluster
 func CommandNamespaceList() *KubeCall {
 	p := newParser()
@@ -162,6 +179,25 @@ func CommandDeploymentList(namespace string) *KubeCall {
 		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
 		"get",
 		"deployments",
+		"-o",
+		"yaml",
+	})
+
+	return &KubeCall{
+		Cmd:    c,
+		Parser: p,
+	}
+}
+
+// CommandDeploymentListBySelector fetch deployments by provided selector
+func CommandDeploymentListBySelector(namespace string, selector []string) *KubeCall {
+	selectorList := strings.Join(selector, ",")
+	p := newParser()
+	c := newCommand([]string{
+		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
+		"get",
+		"deployment",
+		fmt.Sprintf("--selector=%s", selectorList),
 		"-o",
 		"yaml",
 	})

@@ -164,6 +164,28 @@ to perform actual cleanup of deleted images!
 [14:37:42][Step 2/5] Process exited with code 0
 ```
 
+## Command execution
+
+For each given selector, find all associated pods and execute provided command 
+in each container of each pod.
+
+### Sample output
+
+```
+$ fuse exec --deployments app=acme-staging-wrk,app=acme-staging-adm --command date
+===> kubectl --namespace=default get deployment --selector=app=acme-staging-wrk -o yaml
+===> kubectl --namespace=default get deployment --selector=app=acme-staging-adm -o yaml
+===> kubectl --namespace=default get pods --selector=app=acme-staging-wrk,project=acme-188825 -o yaml
+===> kubectl --namespace=default get pods --selector=app=acme-staging-adm,project=acme-188825 -o yaml
+===> kubectl --namespace=default exec acme-staging-wrk-2842908200-wwlxe --container=acme-staging-wrk date
+===> Pod: default/acme-staging-wrk-2842908200-wwlxe, Container: acme-staging-wrk:
+Tue Jul  4 18:49:11 MSK 2017
+
+===> kubectl --namespace=default exec acme-staging-adm-3301714455-wwnu8 --container=acme-staging-adm date
+===> Pod: default/acme-staging-adm-3301714455-wwnu8, Container: acme-staging-adm:
+Tue Jul  4 18:49:11 MSK 2017
+```
+
 ## Stability
 
 Tool currently in pre-release stage, but, it is using heavily to deliver 
