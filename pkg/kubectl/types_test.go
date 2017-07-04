@@ -87,7 +87,7 @@ func TestDeployment_Type(t *testing.T) {
 	assert.Equal(t, "test-deployment", d.GetName())
 	assert.Equal(t, "3eb259fc-bc6f-11e6-a342-005056ba5444", d.GetUUID())
 	assert.Equal(t, "default/test-deployment", d.GetKey())
-	assert.Equal(t, []string{"project=test-project-2", "project_build=12"}, d.GetSelector())
+	assert.Equal(t, []string{"project=test-project-2", "project_build=12"}, d.GetPodSelector())
 	assert.False(t, d.IsReady())
 	assert.Equal(t, "Ready: false, Generation: meta=12 observed=0, Replicas: s=1, u=0, a=0, na=1", d.GetStatusString())
 
@@ -196,7 +196,7 @@ func TestDeployment_IsReady(t *testing.T) {
 	// initial check
 	assert.False(t, d.IsReady())
 	assert.Equal(t, "Ready: false, Generation: meta=12 observed=11, Replicas: s=1, u=0, a=0, na=0", d.GetStatusString())
-	assert.Empty(t, d.GetSelector()) // since no labels defined in Spec.Metadata
+	assert.Empty(t, d.GetPodSelector()) // since no labels defined in Spec.Metadata
 
 	// 1) k8s started rollout
 	d.Status.ObservedGeneration = 12
