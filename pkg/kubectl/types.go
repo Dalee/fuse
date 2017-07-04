@@ -58,8 +58,13 @@ type (
 		Containers []resourceContainer `yaml:"containers"`
 	}
 
+	resourceMetadataSpec struct {
+		Labels map[string]string `yaml:"labels"`
+	}
+
 	resourceTemplate struct {
-		Spec resourceContainerSpec `yaml:"spec"`
+		Metadata resourceMetadataSpec  `yaml:"metadata"`
+		Spec     resourceContainerSpec `yaml:"spec"`
 	}
 
 	resourceStrategyRolling struct {
@@ -276,7 +281,7 @@ func (d *Deployment) GetGeneration() int {
 // GetSelector return slice of selectors associated with Deployment
 func (d *Deployment) GetSelector() []string {
 	selectorList := make([]string, 0)
-	for key, value := range d.Metadata.Labels {
+	for key, value := range d.Spec.Template.Metadata.Labels {
 		selectorList = append(selectorList, fmt.Sprintf("%s=%s", key, value))
 	}
 

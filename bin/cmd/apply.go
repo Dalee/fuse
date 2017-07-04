@@ -32,7 +32,7 @@ func init() {
 	applyCmd.MarkFlagRequired("configuration")
 	applyCmd.MarkFlagFilename("configuration", "yml", "yaml")
 
-	applyCmd.Flags().DurationVarP(&clusterTimeout, "rollout-timeout", "t", 2*time.Minute, "Rollout timeout")
+	applyCmd.Flags().DurationVarP(&clusterTimeout, "rollout-timeout", "t", 3*time.Minute, "Rollout timeout")
 	RootCmd.AddCommand(applyCmd)
 }
 

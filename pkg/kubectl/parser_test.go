@@ -50,6 +50,9 @@ metadata:
     app: test-label
 spec:
   template:
+    metadata:
+      labels:
+        project: "test"
     spec:
       containers:
       - image: example.com/image:1
@@ -73,6 +76,7 @@ spec:
 
 	assert.Len(t, d.Metadata.Labels, 1)
 	assert.Equal(t, d.Metadata.Labels["app"], "test-label")
+	assert.Equal(t, []string{"project=test"}, d.GetSelector())
 
 	assert.Equal(t, d.Metadata.Generation, 42)
 }
