@@ -185,7 +185,7 @@ func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
 	fmt.Println("==> Rollout failed, starting undo process...")
 	for _, d := range *rolledList {
 		// get list of replica sets connected to deployment
-		rlist, err := kubectl.CommandReplicaSetListBySelector(d.GetNamespace(), d.GetPodSelector()).RunAndParse()
+		rlist, err := kubectl.CommandReplicaSetListBySelector(d.GetNamespace(), d.GetSelector()).RunAndParse()
 		if err != nil {
 			return err
 		}
