@@ -2,6 +2,7 @@ package kubectl
 
 import (
 	"github.com/stretchr/testify/assert"
+	"reflect"
 	"testing"
 )
 
@@ -87,7 +88,8 @@ func TestDeployment_Type(t *testing.T) {
 	assert.Equal(t, "test-deployment", d.GetName())
 	assert.Equal(t, "3eb259fc-bc6f-11e6-a342-005056ba5444", d.GetUUID())
 	assert.Equal(t, "default/test-deployment", d.GetKey())
-	assert.Equal(t, []string{"project=test-project-2", "project_build=12"}, d.GetPodSelector())
+	assert.True(t, reflect.DeepEqual([]string{"sample-label1=example1"}, d.GetSelector()))
+	assert.True(t, reflect.DeepEqual([]string{"project=test-project-2", "project_build=12"}, d.GetPodSelector()))
 	assert.False(t, d.IsReady())
 	assert.Equal(t, "Ready: false, Generation: meta=12 observed=0, Replicas: s=1, u=0, a=0, na=1", d.GetStatusString())
 
