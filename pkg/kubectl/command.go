@@ -41,11 +41,11 @@ func (c *kubeCommand) Run() ([]byte, bool) {
 	fmt.Printf("===> %s\n", strings.Join(c.getCommand().Args, " ")) // TODO: should be moved to logging
 
 	result, err := c.getCommand().CombinedOutput()
-	if err != nil {
-		return []byte("Command failed to run"), false
+	if len(result) == 0 {
+		result = []byte("Command failed to run")
 	}
 
-	return result, c.cmd.ProcessState.Success()
+	return result, err == nil
 }
 
 // Command getter

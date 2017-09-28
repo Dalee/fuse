@@ -3,7 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"fuse/pkg/kubectl"
+	"github.com/Dalee/fuse/pkg/kubectl"
 	"github.com/spf13/cobra"
 )
 

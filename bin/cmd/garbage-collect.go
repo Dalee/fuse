@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"fuse/pkg/kubectl"
-	"fuse/pkg/reference"
+	"github.com/Dalee/fuse/pkg/kubectl"
+	"github.com/Dalee/fuse/pkg/reference"
 
 	"github.com/Dalee/hitman/pkg/registry"
 	"github.com/spf13/cobra"
