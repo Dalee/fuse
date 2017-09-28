@@ -1,5 +1,5 @@
-hash: ce947e5c93de78b75c1f4413fcb91d9e58b7e6a04718f8091cbf3f6a4b3a51e8
-updated: 2017-02-18T16:25:33.973970669+03:00
+hash: 41acc916486f752fb218b6de24f1507af931adf1f64f1bc241af1e0c76e82a4a
+updated: 2017-09-28T15:00:32.35447212+03:00
 imports:
 - name: github.com/Dalee/hitman
   version: f86df5948ec31df8f3ccd45cdd5882a11b174256
@@ -12,11 +12,11 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/spf13/cobra
-  version: b5d8e8f46a2f829f755b6e33b454e25c61c935e1
+  version: 5deb57bbca49eb370538fc295ba4b2988f9f5e09
   subpackages:
   - cobra
 - name: github.com/spf13/pflag
-  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
+  version: 5ccb023bc27df288a957c5e994cd44fd19619465
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
 - name: github.com/stretchr/testify

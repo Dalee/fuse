@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fuse/pkg/kubectl"
+	"github.com/Dalee/fuse/pkg/kubectl"
 	"github.com/spf13/cobra"
 	"os"
 )

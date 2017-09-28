@@ -1,4 +1,4 @@
-package: fuse
+package: github.com/Dalee/fuse
 import:
 - package: github.com/ghodss/yaml
 - package: github.com/spf13/cobra

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fuse/bin/cmd"
+	"github.com/Dalee/fuse/bin/cmd"
 	"os"
 )
 
