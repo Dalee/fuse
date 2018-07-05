@@ -165,13 +165,14 @@ func finalizeRollOut(specList *[]kubectl.Deployment, isRolledOut bool) error {
 				continue
 			}
 
-			stdout, err := kubectl.CommandPodLogs(pod.GetNamespace(), pod.GetName()).RunPlain()
-			fmt.Printf("===> Deployment: %s, Pod: %s:\n", d.GetKey(), pod.GetKey())
-			fmt.Println(string(stdout))
-			if err != nil {
-				return err
+			for _, container := range pod.Spec.Containers {
+				stdout, err := kubectl.CommandPodLogs(pod.GetNamespace(), pod.GetName(), container.Name).RunPlain()
+				fmt.Printf("===> Deployment: %s, Pod: %s, Container: %s:\n", d.GetKey(), pod.GetKey(), container.Name)
+				fmt.Println(string(stdout))
+				if err != nil {
+					return err
+				}
 			}
-
 		}
 	}
 

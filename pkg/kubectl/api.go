@@ -228,12 +228,13 @@ func CommandPodListBySelector(namespace string, selector []string) *KubeCall {
 }
 
 // CommandPodLogs return logs for pod
-func CommandPodLogs(namespace, name string) *KubeCall {
+func CommandPodLogs(namespace, name string, container string) *KubeCall {
 	p := newParser()
 	c := newCommand([]string{
 		fmt.Sprintf("--namespace=%s", formatNamespace(namespace)),
 		"logs",
 		"--tail=100",
+		fmt.Sprintf("--container=%s", container),
 		name,
 	})
 
